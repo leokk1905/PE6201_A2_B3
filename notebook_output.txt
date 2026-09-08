@@ -1,0 +1,195 @@
+A2_Scaffold_Tour_ProblemB Output
+Generated: 2026-09-08 02:15:14
+======================================================================
+
+======================================================================
+CELL 1: SETUP
+======================================================================
+BACKEND=scripted  FREE, deterministic  |  PROBLEM=B  |  model=(no model)  |  cap=8 turns  |  autonomy=confirm
+data: d:\Github\PE6201_A2\A2_reference_data\A2_reference_data
+
+======================================================================
+CELL 2: WHAT THE AGENT IS HANDED
+======================================================================
+{
+ "referral_id": "REF-5602",
+ "patient_id": "P-1180",
+ "referring_clinic": "Clementi Medical",
+ "specialty": "OPH",
+ "date_received": "2026-09-09",
+ "clinical_summary": "Gradual blurring of vision over the past year, worse for reading. Suspected cataract. Symptoms are gradual and painless.",
+ "tests_attached": [
+  "VF-01"
+ ],
+ "tests_attached_on": "2026-08-28"
+}
+
+specialty on this referral : OPH
+patient on this referral   : P-1180
+
+======================================================================
+CELL 3: THE RULES THE AGENT MUST REACH
+======================================================================
+the clock (as_of): 2026-09-09
+
+{
+ "red_flag_term": null,
+ "right_department": true,
+ "missing_tests": [],
+ "band": "routine",
+ "window_weeks": 8
+}
+
+-> band 'routine' means an 8-week window measured from as_of
+
+======================================================================
+CELL 4: THE TRAP IN THIS CASE
+======================================================================
+OPH-C1   urgent   2026-09-15 09:40  cap=1   <-- in window, free, but WRONG BAND
+OPH-C1   urgent   2026-09-22 10:00  cap=1   <-- in window, free, but WRONG BAND
+OPH-C2   routine  2026-09-23 11:20  cap=0   (in window but FULL - exists, cannot be booked)
+OPH-C2   routine  2026-09-30 11:20  cap=0   (in window but FULL - exists, cannot be booked)
+OPH-C2   routine  2026-10-14 11:20  cap=2   <-- legal and bookable
+OPH-C2   routine  2026-10-14 14:00  cap=1   <-- legal and bookable
+OPH-C2   routine  2026-10-28 09:00  cap=3   <-- legal and bookable
+OPH-C3   soon     2026-09-29 10:00  cap=2   <-- in window, free, but WRONG BAND
+
+======================================================================
+CELL 5: THE RUN ITSELF
+======================================================================
+  turn 1    · I have a referral id and nothing else. Fetch the record.
+       get_referral               -> {'referral_id': 'REF-5602', 'patient_id': 'P-1180', 'referring_…
+  turn 2    · Two things I need next do not depend on each other: the specialty's rules, and whether t
+       check_referral_criteria    -> {'red_flag_term': None, 'right_department': True, 'missing_test…
+       lookup_patient             -> {'patient': {'patient_id': 'P-1180', 'date_of_birth': '1968-03-…
+  turn 3    · No red flag, right department, VF-01 attached, no duplicate. Band is routine, so the win
+       get_clinic_slots           -> []
+       get_clinic_slots           -> [{'clinic': 'OPH-C2', 'specialty': 'OPH', 'band': 'routine', 'd…
+  turn 4    · OPH-C2 is full until 14 October. First bookable slot inside the window is 2026-10-14 11:
+       book_slot                  -> {'booked': True, 'clinic': 'OPH-C2', 'date': '2026-10-14', 'tim…
+  conclude  · Record the band, the window, the tests and the duplicate check - the answer key asks for
+
+======================================================================
+CELL 6: THE DECISION RECORD
+======================================================================
+{
+  "decision": "book",
+  "booked": {
+    "clinic": "OPH-C2",
+    "date": "2026-10-14",
+    "time": "11:20"
+  },
+  "reason": "Urgency band routine, so an 8-week window from as_of 2026-09-09 closing 2026-11-04; booked at 5 weeks. VF-01 present. No existing OPH appointment for P-1180. OPH-C2 was full until 2026-10-14.",
+  "case_id": "REF-5602",
+  "evidence": [
+    "get_referral",
+    "check_referral_criteria",
+    "lookup_patient",
+    "get_clinic_slots",
+    "get_clinic_slots",
+    "book_slot"
+  ],
+  "turns": 4,
+  "tokens_in": 21000,
+  "tokens_out": 600,
+  "cost_usd": 0.00234,
+  "seconds": 0.002,
+  "guardrails_fired": [
+    {
+      "guardrail": "gate_passed",
+      "detail": "book_slot (autonomy=confirm)"
+    }
+  ],
+  "stopped_by": null,
+  "backend": "scripted"
+}
+
+======================================================================
+CELL 7: GRADING - CODE CHECK
+======================================================================
+THE ANSWER KEY SAYS:
+{
+ "case_id": "REF-5602",
+ "expected_decision": "book",
+ "booked": {
+  "clinic": "OPH-C2",
+  "date": "2026-10-14",
+  "time": "11:20"
+ },
+ "family": "routine_booking_multi_query",
+ "must_record": [
+  "urgency band routine and the 8-week window",
+  "booked at 5 weeks",
+  "VF-01 present",
+  "no existing OPH appointment for P-1180"
+ ],
+ "note": "The brief's worked booking. OPH-C2 is full until 2026-10-14, so the slot search takes more than one query."
+}
+
+CODE CHECK: PASS
+
+======================================================================
+CELL 8: GRADING - JUDGEMENT CHECK
+======================================================================
+The reason the agent gave:
+    Urgency band routine, so an 8-week window from as_of 2026-09-09 closing 2026-11-04; booked at 5 weeks. VF-01 present. No existing OPH appointment for P-1180. OPH-C2 was full until 2026-10-14.
+
+Does it carry each of these? Nobody has ruled yet:
+  [ ] urgency band routine and the 8-week window
+  [ ] booked at 5 weeks
+  [ ] VF-01 present
+  [ ] no existing OPH appointment for P-1180
+
+verdict: None    graded_by: None
+
+======================================================================
+CELL 9: THE FAILURE THAT RAISES NO EXCEPTION (D7)
+======================================================================
+
+BACKEND=scripted  FREE, deterministic  |  PROBLEM=B  |  model=(no model)  |  cap=8 turns  |  autonomy=confirm
+  demonstrating on REF-5602 (Problem B)
+
+BEFORE - the working agent, guard in place
+  turns 4 · tool calls 6 · tokens 21600 · cost US$0.00234 · decision book
+
+AFTER - the working agent MINUS action de-duplication
+  turns 6 · tool calls 10 · tokens 38640 · cost US$0.00412 · decision book
+  stopped by: None
+
+====================================================================
+  1 · THE INSTRUMENTATION THAT FOUND IT
+      turns and cost logged per run. NOTHING RAISED AN EXCEPTION.
+      The run cost 1.8x more and still answered 'book'
+      - THE SAME ANSWER AS THE WORKING AGENT. A pass-rate table
+      alone would show this run as a clean pass. It is only
+      visible because turns and cost were counted.
+  2 · THE TURN DISTRIBUTION
+      before: 4 turns   after: 6 turns   cap: 8
+      runs that hit the cap: 0 of 2
+  3 · THE FIX, AND WHY THE OTHER TWO LAYERS WERE WRONG
+      Action de-duplication caught it, in the CODE layer.
+      The STEP CAP never fired: the loop finished at 6 turns,
+      inside the cap of 8. A cap bounds the damage; it does not
+      detect this. Raise the repeat count and it would - later,
+      and still without naming the cause.
+      The BUDGET CEILING never fired either: 38640 tokens against a
+      ceiling of 60000.
+      A PROMPT fix cannot be relied on - the model is the thing
+      that forgot. Only the code layer remembers.
+  4 · BEFORE AND AFTER
+      pass rate must not fall when the guard is restored - a cap
+      that also truncates legitimate long runs has traded one
+      failure for another. Check it on your whole set, not one case.
+====================================================================
+
+  Now do this for YOUR second failure, in the TOOL INTERFACE or
+  the PROMPT - not loop control again. State which layer the fix
+  belongs in and why the other two were the wrong place. That
+  judgement is most of the mark.
+
+
+======================================================================
+ALL CELLS COMPLETED SUCCESSFULLY!
+======================================================================
+
+Output saved to: notebook_output.txt
