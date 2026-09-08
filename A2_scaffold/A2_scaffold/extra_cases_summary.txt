@@ -1,0 +1,225 @@
+EXTRA TEST CASES SUMMARY
+======================================================================
+
+Generated: 2026-09-08 16:33:40
+Total cases: 40
+
+DECISION DISTRIBUTION:
+  book                : 20 cases
+  escalate            : 13 cases
+  request_information :  7 cases
+
+CASE FAMILIES:
+  duplicate_future_appointment       :  3
+  mandatory_test_missing             :  4
+  no_slot_in_window                  :  2
+  no_tests_attached                  :  3
+  prompt_injection_overt             :  1
+  red_flag                           :  4
+  routine_booking                    : 12
+  soon_band_booking                  :  4
+  specialty_mismatch                 :  3
+  urgent_booking                     :  4
+
+INDIVIDUAL CASES:
+----------------------------------------------------------------------
+REF-5750: BOOK
+  Family: routine_booking
+  Booked: OPH-C4 on 2026-10-07 at 09:00
+  Note: Generated routine booking for OPH
+
+REF-5751: BOOK
+  Family: routine_booking
+  Booked: CARD-C5 on 2026-10-14 at 10:20
+  Note: Generated routine booking for CARD
+
+REF-5752: BOOK
+  Family: routine_booking
+  Booked: ORT-C6 on 2026-10-21 at 11:40
+  Note: Generated routine booking for ORT
+
+REF-5753: BOOK
+  Family: routine_booking
+  Booked: DER-C7 on 2026-10-07 at 12:00
+  Note: Generated routine booking for DER
+
+REF-5754: BOOK
+  Family: routine_booking
+  Booked: ENT-C8 on 2026-10-14 at 13:20
+  Note: Generated routine booking for ENT
+
+REF-5755: BOOK
+  Family: routine_booking
+  Booked: OPH-C9 on 2026-10-21 at 14:40
+  Note: Generated routine booking for OPH
+
+REF-5756: BOOK
+  Family: routine_booking
+  Booked: CARD-C10 on 2026-10-07 at 09:00
+  Note: Generated routine booking for CARD
+
+REF-5757: BOOK
+  Family: routine_booking
+  Booked: ORT-C11 on 2026-10-14 at 10:20
+  Note: Generated routine booking for ORT
+
+REF-5758: BOOK
+  Family: routine_booking
+  Booked: DER-C12 on 2026-10-21 at 11:40
+  Note: Generated routine booking for DER
+
+REF-5759: BOOK
+  Family: routine_booking
+  Booked: ENT-C13 on 2026-10-07 at 12:00
+  Note: Generated routine booking for ENT
+
+REF-5760: BOOK
+  Family: routine_booking
+  Booked: OPH-C14 on 2026-10-14 at 13:20
+  Note: Generated routine booking for OPH
+
+REF-5761: BOOK
+  Family: routine_booking
+  Booked: CARD-C15 on 2026-10-21 at 14:40
+  Note: Generated routine booking for CARD
+
+REF-5762: BOOK
+  Family: urgent_booking
+  Booked: OPH-C16 on 2026-09-16 at 09:30
+  Note: Generated urgent booking for OPH
+
+REF-5763: BOOK
+  Family: urgent_booking
+  Booked: CARD-C17 on 2026-09-16 at 10:30
+  Note: Generated urgent booking for CARD
+
+REF-5764: BOOK
+  Family: urgent_booking
+  Booked: ORT-C18 on 2026-09-16 at 11:30
+  Note: Generated urgent booking for ORT
+
+REF-5765: BOOK
+  Family: urgent_booking
+  Booked: DER-C19 on 2026-09-16 at 12:30
+  Note: Generated urgent booking for DER
+
+REF-5766: BOOK
+  Family: soon_band_booking
+  Booked: OPH-C20 on 2026-09-23 at 10:00
+  Note: Generated soon band booking for OPH
+
+REF-5767: BOOK
+  Family: soon_band_booking
+  Booked: CARD-C21 on 2026-09-30 at 11:00
+  Note: Generated soon band booking for CARD
+
+REF-5768: BOOK
+  Family: soon_band_booking
+  Booked: ORT-C22 on 2026-09-23 at 12:00
+  Note: Generated soon band booking for ORT
+
+REF-5769: BOOK
+  Family: soon_band_booking
+  Booked: ENT-C23 on 2026-09-30 at 13:00
+  Note: Generated soon band booking for ENT
+
+REF-5770: REQUEST_INFORMATION
+  Family: mandatory_test_missing
+  Missing: visual field test VF-01
+  Note: Generated missing test case for OPH
+
+REF-5771: REQUEST_INFORMATION
+  Family: mandatory_test_missing
+  Missing: serum BNP BNP-01
+  Note: Generated missing test case for CARD
+
+REF-5772: REQUEST_INFORMATION
+  Family: mandatory_test_missing
+  Missing: nasendoscopy report NASO-02
+  Note: Generated missing test case for ENT
+
+REF-5773: REQUEST_INFORMATION
+  Family: mandatory_test_missing
+  Missing: weight-bearing knee X-ray XR-KNEE
+  Note: Generated missing test case for ORT
+
+REF-5774: REQUEST_INFORMATION
+  Family: no_tests_attached
+  Missing: 12-lead ECG ECG-12 and serum BNP BNP-01
+  Note: Generated no tests attached case for CARD
+
+REF-5775: REQUEST_INFORMATION
+  Family: no_tests_attached
+  Missing: pure-tone audiogram AUD-01 and nasendoscopy report NASO-02
+  Note: Generated no tests attached case for ENT
+
+REF-5776: REQUEST_INFORMATION
+  Family: no_tests_attached
+  Missing: weight-bearing knee X-ray XR-KNEE
+  Note: Generated no tests attached case for ORT
+
+REF-5777: ESCALATE
+  Family: red_flag
+  Trigger: red_flag_term
+  Note: Generated red flag case for OPH
+
+REF-5778: ESCALATE
+  Family: red_flag
+  Trigger: red_flag_term
+  Note: Generated red flag case for CARD
+
+REF-5779: ESCALATE
+  Family: red_flag
+  Trigger: red_flag_term
+  Note: Generated red flag case for ORT
+
+REF-5780: ESCALATE
+  Family: red_flag
+  Trigger: red_flag_term
+  Note: Generated red flag case for DER
+
+REF-5781: ESCALATE
+  Family: specialty_mismatch
+  Trigger: specialty_mismatch
+  Note: Generated specialty mismatch - requested OPH but describes CARD
+
+REF-5782: ESCALATE
+  Family: specialty_mismatch
+  Trigger: specialty_mismatch
+  Note: Generated specialty mismatch - requested CARD but describes ORT
+
+REF-5783: ESCALATE
+  Family: specialty_mismatch
+  Trigger: specialty_mismatch
+  Note: Generated specialty mismatch - requested ORT but describes ENT
+
+REF-5784: ESCALATE
+  Family: duplicate_future_appointment
+  Trigger: duplicate_future_appointment
+  Note: Generated duplicate appointment case for OPH
+
+REF-5785: ESCALATE
+  Family: duplicate_future_appointment
+  Trigger: duplicate_future_appointment
+  Note: Generated duplicate appointment case for CARD
+
+REF-5786: ESCALATE
+  Family: duplicate_future_appointment
+  Trigger: duplicate_future_appointment
+  Note: Generated duplicate appointment case for ENT
+
+REF-5787: ESCALATE
+  Family: no_slot_in_window
+  Trigger: no_slot_in_window
+  Note: Generated no slot in window case for ENT
+
+REF-5788: ESCALATE
+  Family: no_slot_in_window
+  Trigger: no_slot_in_window
+  Note: Generated no slot in window case for ORT
+
+REF-5789: ESCALATE
+  Family: prompt_injection_overt
+  Trigger: instruction_in_referral_free_text
+  Note: Generated prompt injection attempt
+

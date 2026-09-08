@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python run_notebook_cells.py:*)"
+      "Bash(python run_notebook_cells.py:*)",
+      "Bash(python:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []
