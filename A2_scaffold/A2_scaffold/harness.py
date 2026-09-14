@@ -31,6 +31,7 @@ grading a model is a claim that needs defending.
 import json
 import os
 import statistics
+from datetime import datetime
 
 import config
 from agent import run_case
@@ -215,3 +216,128 @@ def report(results):
             "pass_rate": passed / total if total else 0.0,
             "median_turns": statistics.median(turns) if turns else None,
             "cost_usd": cost}
+
+
+def save_results_to_txt(results, summary, filename="evaluation_report.txt"):
+    """Save evaluation results to a human-readable text file.
+
+    Creates a detailed report with:
+    - Summary statistics (pass rate, costs, turns)
+    - Per-case breakdown with financial metrics
+    - Failed cases with reasons
+    - Token usage distribution
+    """
+    with open(filename, 'w', encoding='utf-8') as f:
+        # Header
+        f.write("="*70 + "\n")
+        f.write("PE6201 Assignment 2 - Evaluation Report\n")
+        f.write("="*70 + "\n")
+        f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Configuration: {config.summary()}\n")
+        f.write(f"Data Path: {config.data_root()}\n")
+        f.write("="*70 + "\n\n")
+
+        # Summary Statistics
+        f.write("SUMMARY STATISTICS\n")
+        f.write("-"*70 + "\n")
+        f.write(f"Total Trials:        {summary['trials']}\n")
+        f.write(f"Passed:              {summary['passed']}\n")
+        f.write(f"Failed:              {summary['trials'] - summary['passed']}\n")
+        f.write(f"Pass Rate:           {summary['pass_rate']*100:.1f}%\n")
+        f.write(f"Median Turns:        {summary.get('median_turns', 'N/A')}\n")
+        f.write(f"Total Cost:          US${summary['cost_usd']:.4f}\n")
+
+        # Token statistics
+        if results:
+            tokens_in_list = [r['record']['tokens_in'] for r in results]
+            tokens_out_list = [r['record']['tokens_out'] for r in results]
+            time_list = [r['record']['seconds'] for r in results]
+
+            f.write(f"\nToken Usage:\n")
+            f.write(f"  Total Input:       {sum(tokens_in_list):,} tokens\n")
+            f.write(f"  Total Output:      {sum(tokens_out_list):,} tokens\n")
+            f.write(f"  Avg Input/Case:    {statistics.mean(tokens_in_list):,.0f} tokens\n")
+            f.write(f"  Avg Output/Case:   {statistics.mean(tokens_out_list):,.0f} tokens\n")
+
+            f.write(f"\nExecution Time:\n")
+            f.write(f"  Total Time:        {sum(time_list):.2f} seconds\n")
+            f.write(f"  Avg Time/Case:     {statistics.mean(time_list):.3f} seconds\n")
+
+            turns_list = [r['record']['turns'] for r in results]
+            f.write(f"\nTurn Distribution:\n")
+            f.write(f"  Min Turns:         {min(turns_list)}\n")
+            f.write(f"  Median Turns:      {statistics.median(turns_list)}\n")
+            f.write(f"  Max Turns:         {max(turns_list)}\n")
+            f.write(f"  Mean Turns:        {statistics.mean(turns_list):.2f}\n")
+
+        f.write("\n" + "="*70 + "\n\n")
+
+        # Failed Cases
+        failures = [r for r in results if not r["passed"]]
+        if failures:
+            f.write("FAILED CASES\n")
+            f.write("-"*70 + "\n")
+            f.write(f"Total Failures: {len(failures)}\n\n")
+
+            for r in failures:
+                f.write(f"Case ID:     {r['case_id']}\n")
+                f.write(f"Trial:       {r['trial']}\n")
+                f.write(f"Family:      {r.get('family', 'N/A')}\n")
+                f.write(f"Decision:    {r['record'].get('decision', 'N/A')}\n")
+                f.write(f"Turns:       {r['record']['turns']}\n")
+                f.write(f"Cost:        US${r['record']['cost_usd']:.6f}\n")
+                f.write(f"Failures:\n")
+                for fail in r['fails']:
+                    f.write(f"  - {fail}\n")
+                f.write(f"Reason:      {r['record'].get('reason', 'N/A')}\n")
+                f.write("-"*70 + "\n")
+        else:
+            f.write("FAILED CASES\n")
+            f.write("-"*70 + "\n")
+            f.write("No failures - all trials passed the code check!\n\n")
+
+        f.write("\n" + "="*70 + "\n\n")
+
+        # Per-Case Details
+        f.write("PER-CASE BREAKDOWN\n")
+        f.write("-"*70 + "\n\n")
+
+        # Group by case_id
+        by_case = {}
+        for r in results:
+            cid = r['case_id']
+            if cid not in by_case:
+                by_case[cid] = []
+            by_case[cid].append(r)
+
+        for case_id in sorted(by_case.keys()):
+            trials = by_case[case_id]
+            f.write(f"Case: {case_id}\n")
+
+            for i, trial in enumerate(trials, 1):
+                rec = trial['record']
+                status = "PASS" if trial['passed'] else "FAIL"
+
+                f.write(f"  Trial {i}: {status}\n")
+                f.write(f"    Decision:      {rec.get('decision', 'N/A')}\n")
+                f.write(f"    Turns:         {rec['turns']}\n")
+                f.write(f"    Tokens In:     {rec['tokens_in']:,}\n")
+                f.write(f"    Tokens Out:    {rec['tokens_out']:,}\n")
+                f.write(f"    Cost:          US${rec['cost_usd']:.6f}\n")
+                f.write(f"    Time:          {rec['seconds']:.3f}s\n")
+                f.write(f"    Tools Called:  {', '.join(rec.get('evidence', []))}\n")
+
+                if rec.get('booked'):
+                    b = rec['booked']
+                    f.write(f"    Booked:        {b.get('clinic')} on {b.get('date')} at {b.get('time')}\n")
+
+                if trial.get('fails'):
+                    f.write(f"    Failures:      {'; '.join(trial['fails'])}\n")
+
+                f.write("\n")
+
+        f.write("="*70 + "\n")
+        f.write("END OF REPORT\n")
+        f.write("="*70 + "\n")
+
+    return filename

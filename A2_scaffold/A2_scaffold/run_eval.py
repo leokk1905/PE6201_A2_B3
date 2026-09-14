@@ -21,7 +21,7 @@ import sys
 
 import config
 from backends import SCRIPTS
-from harness import load_cases, load_key, report, run_set
+from harness import load_cases, load_key, report, run_set, save_results_to_txt
 
 
 def main(argv):
@@ -88,12 +88,18 @@ def main(argv):
     results, queue = run_set(cases)
     summary = report(results)
 
+    # Save JSON results
     with open("results.json", "w", encoding="utf-8") as fh:
         json.dump({"config": config.summary(), "summary": summary,
                    "results": [{k: v for k, v in r.items()} for r in results],
                    "judgement_queue": queue}, fh, indent=2, default=str)
     print("  Wrote results.json - commit it. Your result tables come from")
     print("  here, and a marker reads it alongside your report.")
+
+    # Save human-readable text report
+    txt_file = save_results_to_txt(results, summary)
+    print(f"  Wrote {txt_file} - detailed human-readable report with")
+    print("  financial metrics, per-case breakdown, and failure analysis.")
     print()
     return 0
 
