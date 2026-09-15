@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python run_notebook_cells.py:*)",
       "Bash(python:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(del \"d:\\Github\\PE6201_A2\\good_run_principles.md\")"
     ],
     "deny": [],
     "ask": []

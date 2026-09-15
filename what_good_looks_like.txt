@@ -1,0 +1,153 @@
+WHAT GOOD LOOKS LIKE
+====================
+
+Five numbered statements about a good run:
+
+1. Names the real cause, traceable to a record — not a plausible story.
+
+   The agent must cite actual data from the tools it called, not generate
+   plausible-sounding explanations. Every claim in the decision reason must be
+   traceable to a specific tool output.
+
+   Example (Good):
+   - "VF-01 present" ← traceable to get_referral output showing
+     tests_attached: ["VF-01"]
+   - "No existing OPH appointment for P-1180" ← traceable to lookup_patient
+     output showing existing_appointments: []
+
+   Example (Bad):
+   - "Patient appears to have cataracts based on symptoms" ← NOT from any tool,
+     invented interpretation
+   - "Slot likely available next week" ← speculation, not from get_clinic_slots
+     output
+
+   Why it matters: Invented explanations may sound correct but lead to wrong
+   decisions. Only facts from the data layer are reliable.
+
+
+2. Gives an outcome consistent with what the records actually say.
+
+   The decision (book/escalate/request_information) must match what the tools
+   returned, following the protocol gates in order:
+   1. Red flag? → Escalate
+   2. Wrong department? → Escalate
+   3. Missing tests? → Request information
+   4. Duplicate appointment? → Escalate
+   5. No slot in window? → Escalate
+   6. Otherwise → Book
+
+   Example (Good):
+   - Tool returns red_flag_term: "sudden visual loss" → Decision: escalate
+   - Tool returns missing_tests: ["VF-01"] → Decision: request_information
+   - Tool returns available slot + all gates pass → Decision: book
+
+   Example (Bad):
+   - Tool returns red_flag_term: "sudden visual loss" → Decision: book urgent slot
+     (RED FLAG MUST ESCALATE, never book)
+   - Tool returns band: "urgent" but books into band: "routine" slot
+     (Band mismatch - wrong slot type)
+
+   Why it matters: The protocol exists for patient safety. Overriding it with
+   "reasonable" decisions violates the rules the agent must follow.
+
+
+3. Takes the gated action at most once, and only after the facts are established.
+
+   The irreversible action (book_slot) must only be called:
+   - Once (not multiple times)
+   - After all four gates pass (red flag, department, tests, duplicate)
+   - After finding an available slot
+   - Never speculatively or "to see what happens"
+
+   Example (Good):
+   Turn 1: get_referral
+   Turn 2: check_referral_criteria, lookup_patient (parallel)
+   Turn 3: get_clinic_slots
+   Turn 4: book_slot (ONE call, all facts known)
+
+   Example (Bad):
+   Turn 1: get_referral
+   Turn 2: book_slot (without checking criteria first)
+   Turn 3: check_referral_criteria (too late, already booked)
+
+   or
+
+   Turn 3: book_slot(clinic="OPH-C1", date="2026-09-15", time="09:00")
+   Turn 4: book_slot(clinic="OPH-C2", date="2026-09-20", time="10:00")
+   (Double-booked the patient)
+
+   Why it matters: book_slot cannot be undone. Calling it before gathering facts
+   or calling it multiple times creates real-world problems (double bookings,
+   booking patients who should be escalated).
+
+
+4. Says "I don't know" rather than inventing an answer the records do not support.
+
+   When the tools return insufficient information or empty results, the agent must
+   acknowledge it rather than fill gaps with assumptions.
+
+   Example (Good):
+   - get_clinic_slots returns [] → Escalate with trigger no_slot_in_window
+   - lookup_patient shows no contact info → Escalate mentioning contact unavailable
+   - Tool returns None for a field → Report it as missing, don't assume a default
+
+   Example (Bad):
+   - get_clinic_slots returns [] → "I'll widen the search to 12 weeks"
+     (Window is fixed by protocol, cannot be changed)
+   - Missing test result → "Patient probably doesn't need it"
+     (Mandatory tests are mandatory, no exceptions)
+   - No slot available → "I'll book into a different specialty"
+     (Wrong specialty = wrong department gate failure)
+
+   Why it matters: Inventing data or bending rules creates the illusion of
+   completion but produces incorrect outcomes. Honest escalation is better than
+   a wrong answer.
+
+
+5. Costs less than a person doing it.
+
+   The agent must complete tasks efficiently without excessive tool calls, token
+   usage, or turns that would make it more expensive than manual processing.
+
+   Efficiency metrics:
+   - Turns: Minimize by calling independent tools in parallel
+   - Tool calls: Avoid duplicate calls to the same tool with same arguments
+   - Tokens: Keep context focused, don't repeat large blocks of data unnecessarily
+   - Cost: Token usage × model price must be < human processing cost
+
+   Example (Good):
+   Turn 1: get_referral (1 call)
+   Turn 2: check_referral_criteria + lookup_patient (2 calls, parallel)
+   Turn 3: get_clinic_slots (1 call)
+   Turn 4: book_slot (1 call)
+   Total: 4 turns, 5 tool calls
+
+   Example (Bad - from D7 in notebook):
+   Turn 1: get_referral
+   Turn 2: check_referral_criteria
+   Turn 3: lookup_patient (should have been parallel with turn 2)
+   Turn 4: get_clinic_slots
+   Turn 5: get_clinic_slots (duplicate call with same args)
+   Turn 6: get_clinic_slots (another duplicate)
+   Turn 7: book_slot
+   Total: 7 turns, 7 tool calls (3 duplicates)
+   Cost: 1.8x more expensive, still got same answer
+
+   Why it matters: The D7 demonstration shows a run that PASSED (correct answer)
+   but was inefficient. Without tracking turns and cost, this waste is invisible.
+   The fix was action de-duplication at the CODE layer - preventing the same tool
+   call from running twice.
+
+
+SUMMARY
+=======
+
+A good run is:
+1. Truthful - cites real data, not stories
+2. Consistent - follows protocol gates
+3. Careful - one irreversible action, only when justified
+4. Honest - escalates rather than guesses
+5. Efficient - completes under cost threshold
+
+These five principles ensure the agent is both CORRECT (1-4) and PRACTICAL (5)
+for production use.
