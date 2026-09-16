@@ -233,5 +233,60 @@
     "patient_id": "P-1289",
     "method": "email",
     "value": "p1289@example.test"
+  },
+  {
+    "patient_id": "P-GR01",
+    "method": "email",
+    "value": "guardrail.test01@example.test"
+  },
+  {
+    "patient_id": "P-GR02",
+    "method": "email",
+    "value": "guardrail.test02@example.test"
+  },
+  {
+    "patient_id": "P-GR03",
+    "method": "email",
+    "value": "guardrail.test03@example.test"
+  },
+  {
+    "patient_id": "P-GR04A",
+    "method": "email",
+    "value": "guardrail.test04a@example.test"
+  },
+  {
+    "patient_id": "P-GR04B",
+    "method": "email",
+    "value": "guardrail.test04b@example.test"
+  },
+  {
+    "patient_id": "P-GR04C",
+    "method": "email",
+    "value": "guardrail.test04c@example.test"
+  },
+  {
+    "patient_id": "P-GR08",
+    "method": "email",
+    "value": "guardrail.test08@example.test"
+  },
+  {
+    "patient_id": "P-GR09",
+    "method": "email",
+    "value": "guardrail.test09@example.test"
+  },
+  {
+    "patient_id": "P-GR10",
+    "method": "email",
+    "value": "guardrail.test10@example.test"
+  },
+  {
+    "patient_id": "P-GR11",
+    "method": "email",
+    "value": "guardrail.test11@example.test"
+  },
+  {
+    "patient_id": "P-GR12",
+    "method": "email",
+    "value": "guardrail.test12@example.test"
   }
 ]

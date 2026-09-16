@@ -1,0 +1,79 @@
+
+======================================================================
+AUTONOMY MODE JUSTIFICATION (D3a)
+======================================================================
+
+Current setting: AUTONOMY = 'confirm'
+
+JUSTIFICATION:
+
+1. WHY NOT 'suggest':
+   - 'suggest' mode requires human action for EVERY irreversible step
+   - This defeats the purpose of an autonomous agent
+   - The agent becomes a form-filler, not a decision-maker
+   - Appropriate for: exploratory systems, training mode
+
+2. WHY NOT 'act':
+   - 'act' mode gives full autonomy without human checkpoint
+   - Irreversible actions (book_slot, issue_decision_letter) happen
+     automatically without review
+   - Appropriate for: high-confidence systems, well-tested domains,
+     actions that are easily reversible
+   - Risk: errors in booking/decisions require human intervention
+
+3. WHY 'confirm':
+   - Balances autonomy with safety
+   - Agent handles ALL information gathering autonomously
+   - Human reviews only the FINAL irreversible step
+   - Preserves agent behavior: thinks, plans, gathers evidence
+   - Provides safety: human can catch errors before commitment
+   - Efficient: only ONE checkpoint, not constant supervision
+
+4. GATE PLACEMENT:
+   - Gate is placed in front of the IRREVERSIBLE ACTION:
+     * Problem A: issue_decision_letter
+     * Problem B: book_slot
+   - NOT in front of the agent as a whole
+   - This is critical: an agent gated as a whole is not an agent,
+     it is a form
+
+5. EVIDENCE FROM THE DOMAIN:
+   - Healthcare decisions (claims, appointments) are:
+     * High-stakes (patient care, financial commitments)
+     * Not easily reversible (bookings displace other patients)
+     * Subject to regulatory requirements
+   - BUT information gathering is:
+     * Low-risk (read-only operations)
+     * Repeatable (can be redone if needed)
+     * Time-consuming (multiple data sources)
+
+CONCLUSION:
+  'confirm' mode maximizes autonomous efficiency while maintaining
+  human oversight at the critical commitment point. This is the
+  appropriate setting for production healthcare agent systems.
+
+======================================================================
+
+
+======================================================================
+PE6201 A2 - GUARDRAIL CHECKLIST (D3b)
+======================================================================
+Backend: scripted (scripted - deterministic, free)
+Problem: B
+Total Tests: 13
+======================================================================
+
+Running test_gr01_step_cap_excessive_turns...
+
+  Could not find the reference data.
+  I looked for a folder containing BOTH data_A/ and data_B/ in:
+    D:\Github\PE6201_A2\A2_reference_data\A2_reference_data
+    D:\Github\PE6201_A2\A2_scaffold\A2_reference_data
+    D:\Github\PE6201_A2\A2_scaffold\A2_scaffold\A2_reference_data
+    D:\Github\PE6201_A2\A2_scaffold\fixtures
+    D:\Github\PE6201_A2\A2_scaffold
+
+  Fix it either way:
+    1. put A2_reference_data/ next to this scaffold folder, or
+    2. export A2_DATA=/path/to/A2_reference_data
+

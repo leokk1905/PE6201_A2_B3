@@ -269,5 +269,60 @@
     "patient_id": "P-1289",
     "date_of_birth": "1972-06-15",
     "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR01",
+    "date_of_birth": "1980-01-01",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR02",
+    "date_of_birth": "1980-01-02",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR03",
+    "date_of_birth": "1980-01-03",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR04A",
+    "date_of_birth": "1980-01-04",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR04B",
+    "date_of_birth": "1980-01-05",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR04C",
+    "date_of_birth": "1980-01-06",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR08",
+    "date_of_birth": "1980-01-08",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR09",
+    "date_of_birth": "1980-01-09",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR10",
+    "date_of_birth": "1980-01-10",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR11",
+    "date_of_birth": "1980-01-11",
+    "existing_appointments": []
+  },
+  {
+    "patient_id": "P-GR12",
+    "date_of_birth": "1980-01-12",
+    "existing_appointments": []
   }
 ]

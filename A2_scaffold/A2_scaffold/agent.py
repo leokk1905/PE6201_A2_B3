@@ -84,7 +84,7 @@ def run_case(case_id, problem=None, approve=None, verbose=False):
             move = backend.next_move(transcript)
             ti, to = backend.token_estimate(transcript)
             tokens_in, tokens_out = tokens_in + ti, tokens_out + to
-            guards.check_budget(tokens_in + tokens_out)
+            guards.check_budget(tokens_in + tokens_out, turn=turns)
 
             if verbose:
                 label = ("conclude" if "final" in move else "turn %d" % (turns + 1))
@@ -106,15 +106,15 @@ def run_case(case_id, problem=None, approve=None, verbose=False):
             observations = []
 
             for name, args in calls:
-                guards.check_duplicate(name, args)
+                guards.check_duplicate(name, args, turn=turns)
 
                 # THE GATE goes in front of the irreversible step only.
                 if name == tools.GATED_ACTION.get(problem):
-                    if not guards.gate(name, args, approve):
+                    if not guards.gate(name, args, approve, turn=turns):
                         raise GuardrailStop(
                             "gate_held",
-                            "%s awaits human approval (autonomy=%s)"
-                            % (name, config.AUTONOMY))
+                            "%s awaits human approval (autonomy=%s) at turn %d"
+                            % (name, config.AUTONOMY, turns))
 
                 result = tools.call(problem, name, args)
                 evidence.append(name)

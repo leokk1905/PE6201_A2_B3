@@ -41,22 +41,24 @@ class Guardrails:
 
     # ---- 1 · step cap -----------------------------------------------
     def check_turns(self, turn):
+        self.current_turn = turn  # Track for loud reporting
         if turn > self.max_turns:
-            self._fire("step_cap", "reached %d turns" % self.max_turns)
-            raise GuardrailStop("step_cap",
-                                "hit the %d-turn cap without a conclusion"
-                                % self.max_turns)
+            msg = ("GUARDRAIL FIRED at turn %d: exceeded %d-turn cap without conclusion"
+                   % (turn, self.max_turns))
+            self._fire("step_cap", msg)
+            raise GuardrailStop("step_cap", msg)
 
     # ---- 2 · budget ceiling -----------------------------------------
-    def check_budget(self, tokens_so_far):
+    def check_budget(self, tokens_so_far, turn=None):
         if tokens_so_far > self.max_tokens:
-            self._fire("budget_ceiling", "%d tokens" % tokens_so_far)
-            raise GuardrailStop("budget_ceiling",
-                                "spent %d tokens, ceiling is %d"
-                                % (tokens_so_far, self.max_tokens))
+            turn_info = (" at turn %d" % turn) if turn else ""
+            msg = ("GUARDRAIL FIRED%s: spent %d tokens, ceiling is %d"
+                   % (turn_info, tokens_so_far, self.max_tokens))
+            self._fire("budget_ceiling", msg)
+            raise GuardrailStop("budget_ceiling", msg)
 
     # ---- 3 · action de-duplication ----------------------------------
-    def check_duplicate(self, tool, args):
+    def check_duplicate(self, tool, args, turn=None):
         """A loop has no memory of its own actions unless you give it one.
 
         This IS that memory. Class 4's loop failure was exactly this
@@ -65,14 +67,15 @@ class Guardrails:
         """
         signature = (tool, repr(sorted(args.items())))
         if signature in self.seen_actions:
-            self._fire("duplicate_action", "%s repeated" % tool)
-            raise GuardrailStop("duplicate_action",
-                                "%s called again with identical arguments "
-                                "- the loop is not progressing" % tool)
+            turn_info = (" at turn %d" % turn) if turn else ""
+            msg = ("GUARDRAIL FIRED%s: %s called again with identical arguments "
+                   "- the loop is not progressing" % (turn_info, tool))
+            self._fire("duplicate_action", msg)
+            raise GuardrailStop("duplicate_action", msg)
         self.seen_actions.add(signature)
 
     # ---- 4 · autonomy gate ------------------------------------------
-    def gate(self, action_name, payload, approve=None):
+    def gate(self, action_name, payload, approve=None, turn=None):
         """Called ONLY in front of the irreversible step.
 
         Note where this sits: in front of the ACTION, not in front of the
@@ -83,16 +86,22 @@ class Guardrails:
         record still shows the gate was passed, which is what a marker
         checks for.
         """
+        turn_info = (" at turn %d" % turn) if turn else ""
+
         if self.autonomy == "act":
-            self._fire("gate_passed", "%s (autonomy=act)" % action_name)
+            msg = "GATE PASSED%s: %s (autonomy=act)" % (turn_info, action_name)
+            self._fire("gate_passed", msg)
             return True
         if self.autonomy == "suggest":
-            self._fire("gate_held", "%s (autonomy=suggest)" % action_name)
+            msg = "GATE HELD%s: %s (autonomy=suggest - requires human action)" % (turn_info, action_name)
+            self._fire("gate_held", msg)
             return False
         # confirm
         ok = bool(approve and approve(action_name, payload))
-        self._fire("gate_%s" % ("passed" if ok else "held"),
-                   "%s (autonomy=confirm)" % action_name)
+        status = "PASSED" if ok else "HELD"
+        msg = ("GATE %s%s: %s (autonomy=confirm%s)"
+               % (status, turn_info, action_name, " - approved" if ok else " - awaiting approval"))
+        self._fire("gate_%s" % ("passed" if ok else "held"), msg)
         return ok
 
     # ---- bookkeeping ------------------------------------------------
