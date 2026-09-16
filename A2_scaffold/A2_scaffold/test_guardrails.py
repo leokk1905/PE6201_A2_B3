@@ -641,6 +641,154 @@ def print_autonomy_justification():
     print()
 
 
+def write_results_to_file(results):
+    """Write detailed test results to a text file"""
+    # Output file location: next to what_good_looks_like.txt
+    output_path = os.path.join(os.path.dirname(__file__), "..", "..",
+                               "guardrail_test_results.txt")
+    output_path = os.path.abspath(output_path)
+
+    with open(output_path, 'w') as f:
+        f.write("="*80 + "\n")
+        f.write("GUARDRAIL TEST RESULTS - DETAILED REJECTION REPORT\n")
+        f.write("="*80 + "\n")
+        f.write(f"\nGenerated: {os.path.basename(__file__)}\n")
+        f.write(f"Backend: {config.BACKEND} (scripted - deterministic, free)\n")
+        f.write(f"Problem: {config.PROBLEM}\n")
+        f.write(f"Total Tests: {len(results)}\n")
+        f.write(f"Passed: {sum(1 for r in results if r.passed)}/{len(results)}\n")
+        f.write("\n" + "="*80 + "\n\n")
+
+        # Detailed results for each test
+        for r in results:
+            f.write("-"*80 + "\n")
+            f.write(f"TEST: {r.test_id}\n")
+            f.write("-"*80 + "\n")
+            f.write(f"Description: {r.description}\n")
+            f.write(f"Wrong Behaviour Caught: {r.wrong_behaviour}\n")
+            f.write(f"\nStatus: {'PASS' if r.passed else 'FAIL'}\n")
+            f.write(f"\nExpected Guardrail: {r.expected_guardrail or 'None (should complete normally)'}\n")
+            f.write(f"Actual Guardrail:   {r.actual_guardrail or 'None'}\n")
+            f.write(f"\nObserved Result:\n  {r.observed}\n")
+
+            # Detailed information
+            if r.details:
+                f.write(f"\nDetailed Information:\n")
+                f.write(f"  Turns: {r.details.get('turns', 'N/A')}\n")
+                f.write(f"  Tokens: {r.details.get('tokens', 'N/A')}\n")
+                f.write(f"  Decision: {r.details.get('decision', 'N/A')}\n")
+                f.write(f"  Stopped By: {r.details.get('stopped_by', 'None')}\n")
+
+                # Show all guardrails that fired
+                fired = r.details.get('guardrails_fired', [])
+                if fired:
+                    f.write(f"\n  Guardrails Fired:\n")
+                    for g in fired:
+                        f.write(f"    - {g.get('guardrail', 'unknown')}: {g.get('detail', '')}\n")
+                else:
+                    f.write(f"\n  Guardrails Fired: None\n")
+
+            f.write("\n")
+
+        # Summary by category
+        f.write("="*80 + "\n")
+        f.write("SUMMARY BY GUARDRAIL TYPE\n")
+        f.write("="*80 + "\n\n")
+
+        categories = {
+            'step_cap': [],
+            'budget_ceiling': [],
+            'duplicate_action': [],
+            'gate_held': [],
+            'gate_passed': [],
+            'none': []
+        }
+
+        for r in results:
+            category = r.actual_guardrail or 'none'
+            if category in categories:
+                categories[category].append(r)
+            else:
+                categories['none'].append(r)
+
+        for cat, tests in categories.items():
+            if tests:
+                f.write(f"\n{cat.upper().replace('_', ' ')} ({len(tests)} tests):\n")
+                for r in tests:
+                    status = "PASS" if r.passed else "FAIL"
+                    f.write(f"  [{status}] {r.test_id}: {r.description}\n")
+                    if r.details and r.details.get('guardrails_fired'):
+                        # Show the specific rejection message
+                        for g in r.details['guardrails_fired']:
+                            if g.get('guardrail') == cat:
+                                detail = g.get('detail', '')
+                                if detail:
+                                    f.write(f"        => {detail}\n")
+
+        # Key findings
+        f.write("\n" + "="*80 + "\n")
+        f.write("KEY FINDINGS - WHY GUARDRAILS REJECTED\n")
+        f.write("="*80 + "\n\n")
+
+        f.write("1. STEP CAP (Turn Limit) Rejections:\n")
+        step_cap_tests = [r for r in results if r.actual_guardrail == 'step_cap']
+        if step_cap_tests:
+            for r in step_cap_tests:
+                turns = r.details.get('turns', 'unknown') if r.details else 'unknown'
+                f.write(f"   {r.test_id}: Exceeded limit at turn {turns}\n")
+                if r.details and r.details.get('guardrails_fired'):
+                    for g in r.details['guardrails_fired']:
+                        if g.get('guardrail') == 'step_cap':
+                            f.write(f"     Reason: {g.get('detail', '')}\n")
+        else:
+            f.write("   None\n")
+
+        f.write("\n2. BUDGET CEILING (Token Limit) Rejections:\n")
+        budget_tests = [r for r in results if r.actual_guardrail == 'budget_ceiling']
+        if budget_tests:
+            for r in budget_tests:
+                tokens = r.details.get('tokens', 'unknown') if r.details else 'unknown'
+                f.write(f"   {r.test_id}: Exceeded token limit ({tokens} tokens)\n")
+                if r.details and r.details.get('guardrails_fired'):
+                    for g in r.details['guardrails_fired']:
+                        if g.get('guardrail') == 'budget_ceiling':
+                            f.write(f"     Reason: {g.get('detail', '')}\n")
+        else:
+            f.write("   None\n")
+
+        f.write("\n3. DUPLICATE ACTION (Loop Prevention) Rejections:\n")
+        dup_tests = [r for r in results if r.actual_guardrail == 'duplicate_action']
+        if dup_tests:
+            for r in dup_tests:
+                turns = r.details.get('turns', 'unknown') if r.details else 'unknown'
+                f.write(f"   {r.test_id}: Detected duplicate at turn {turns}\n")
+                if r.details and r.details.get('guardrails_fired'):
+                    for g in r.details['guardrails_fired']:
+                        if g.get('guardrail') == 'duplicate_action':
+                            f.write(f"     Reason: {g.get('detail', '')}\n")
+        else:
+            f.write("   None\n")
+
+        f.write("\n4. AUTONOMY GATE (Human Oversight) Holds:\n")
+        gate_tests = [r for r in results if r.actual_guardrail == 'gate_held']
+        if gate_tests:
+            for r in gate_tests:
+                turns = r.details.get('turns', 'unknown') if r.details else 'unknown'
+                f.write(f"   {r.test_id}: Gate held at turn {turns}\n")
+                if r.details and r.details.get('guardrails_fired'):
+                    for g in r.details['guardrails_fired']:
+                        if g.get('guardrail') == 'gate_held':
+                            f.write(f"     Reason: {g.get('detail', '')}\n")
+        else:
+            f.write("   None\n")
+
+        f.write("\n" + "="*80 + "\n")
+        f.write("END OF REPORT\n")
+        f.write("="*80 + "\n")
+
+    return output_path
+
+
 if __name__ == "__main__":
     # Ensure we're using scripted backend
     original_backend = config.BACKEND
@@ -649,6 +797,15 @@ if __name__ == "__main__":
     try:
         print_autonomy_justification()
         results = run_all_tests()
+
+        # Write detailed results to file
+        output_file = write_results_to_file(results)
+        print()
+        print("="*70)
+        print(f"Detailed results written to:")
+        print(f"  {output_file}")
+        print("="*70)
+        print()
 
         # Return exit code based on results
         sys.exit(0 if all(r.passed for r in results) else 1)
