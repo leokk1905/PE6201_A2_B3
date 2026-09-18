@@ -81,34 +81,115 @@ outcomes:
                         instructions aimed at the system.
                         Record THE SINGLE TRIGGER.
 
-Check in this order, and STOP at the first one that fires:
+Start every case by calling get_referral(referral_id).
+Do not call check_referral_criteria, lookup_patient, get_clinic_slots,
+or book_slot until get_referral has returned the referral record.
+
+After get_referral returns:
+- call check_referral_criteria using the specialty from the referral;
+- call lookup_patient using the patient_id from the referral;
+- these two calls are independent and may be made together.
+
+Then apply the checks in this order, and STOP at the first one that fires:
   1 red flag   2 wrong department   3 missing test   4 duplicate appointment
-Only if all four pass do you query a slot.""",
+
+Only if all four pass do you query get_clinic_slots.
+
+If get_clinic_slots returns a legal slot, you MUST call book_slot before
+returning a final "book" decision.
+
+Never report decision="book" merely because a suitable slot was found.
+A referral is booked only after book_slot returns a successful confirmation.
+
+After book_slot succeeds, return the final "book" decision using the
+confirmed clinic, date and time.""",
 }
 
 _HOW_TO_ANSWER = """
 HOW TO ANSWER
-Reply with JSON and nothing else. Two shapes only:
+Reply with ONE valid JSON object and nothing else. Do not use Markdown
+fences, comments, trailing text, or Python syntax.
 
-  to call tools (several at once ONLY if they do not depend on each other):
-    {"thought": "...", "calls": [["tool_name", {"arg": "value"}], ...]}
+There are only two top-level shapes:
 
-  to finish:
-    {"thought": "...", "final": {"decision": "...", "reason": "...", ...}}
+1. To call tools (several at once ONLY when independent):
+   {"thought":"...","calls":[["tool_name",{"arg":"value"}], ...]}
 
-Put the single trigger in "trigger" when you escalate, the exact missing
-thing in "missing" when you request, and {"clinic","date","time"} in
-"booked" when you book.
+2. To finish:
+   {"thought":"...","final":{...}}
+
+For Problem B, the final object MUST use exactly one of these shapes:
+
+BOOK
+{"decision":"book","reason":"short plain-text explanation",
+ "booked":{"clinic":"...","date":"YYYY-MM-DD","time":"HH:MM"}}
+
+REQUEST INFORMATION
+{"decision":"request_information","reason":"short plain-text explanation",
+ "missing":"exact missing test or information"}
+
+ESCALATE
+{"decision":"escalate","reason":"short plain-text explanation",
+ "trigger":"CANONICAL_TRIGGER"}
+
+For Problem B escalation, CANONICAL_TRIGGER must be exactly one of:
+  red_flag_term
+  specialty_mismatch
+  duplicate_future_appointment
+  no_slot_in_window
+  instruction_in_referral_free_text
+
+Do not invent synonyms such as "wrong_department", "duplicate appointment",
+or "no slot exists in the window". Use the canonical trigger above that
+matches the routing rule.
+
+IMPORTANT OUTPUT RULES:
+- "reason" must always be a plain string, never an object.
+- For decision="book", "booked" must be a TOP-LEVEL field inside "final".
+  Never put clinic/date/time inside "reason".
+- For decision="request_information", include top-level "missing".
+- For decision="escalate", include top-level "trigger".
+- Do not include a trigger for book or request_information.
+
+IMPORTANT BOOKING RULE:
+If get_clinic_slots returns a legal slot, you MUST call book_slot before
+returning a final decision of "book".
+
+Never return decision="book" merely because a suitable slot was found.
+The referral is only booked after book_slot returns a successful booking
+confirmation.
+
+After book_slot succeeds, return the final "book" decision using the
+confirmed clinic, date, and time.
 """
 
 
 def format_descriptor(d):
-    """One tool, as the model sees it.
+    """Render one model-facing tool contract.
 
-    The SIX FIELDS are all here. Note that `failure` gets its own line
-    and is not buried - it is the field that most changes behaviour and
-    the one teams most often leave as 'returns null'.
+    Problem B uses the assignment's explicit six-field D2(b) format.
+    The fallback keeps the legacy scaffold descriptors usable
+    for Problem A without rewriting unrelated work.
     """
+    if "signature" in d:
+        inputs = "\n".join(
+            "      %-16s %s" % (k, v) for k, v in d["input"].items()
+        )
+        return ("  NAME + SIGNATURE\n"
+                "    %s\n"
+                "  WHAT\n"
+                "    %s\n"
+                "  INPUT\n%s\n"
+                "  RETURNS\n"
+                "    %s\n"
+                "  FAILS WHEN\n"
+                "    %s\n"
+                "  IRREVERSIBLE?\n"
+                "    %s\n"
+                % (d["signature"], d["what"], inputs, d["returns"],
+                   d["fails_when"], d["irreversible"]))
+
+    # Scaffold fallback for Problem A's original descriptors.
     args = "\n".join("      %-16s %s" % (k, v) for k, v in d["args"].items())
     return ("  %s\n"
             "    purpose : %s\n"
@@ -165,11 +246,12 @@ def audit(problem=None):
     missing = [n for n in names if n not in tools.DESCRIPTORS]
 
     print("=" * 68)
-    print("  SYSTEM PROMPT - Problem %s - what the model is told before turn 1"
-          % problem)
+    print("  SYSTEM PROMPT - Problem %s - Version %s - what the model sees"
+          % (problem, config.VERSION))
     print("=" * 68)
     print(text)
     print("=" * 68)
+    print("  Version   %s" % config.VERSION)
     print("  characters      %d" % len(text))
     print("  ~tokens         %d   (rough: chars/4)" % (len(text) // 4))
     print("  tools callable  %d" % len(names))

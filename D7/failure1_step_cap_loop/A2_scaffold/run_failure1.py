@@ -14,8 +14,10 @@ WHAT WAS DELETED
     instead of agent_broken.py - nothing else changes.
 
 WHAT THIS SCRIPT DOES, IN ORDER
-    1. Runs six real, answer-key-verified Problem B cases through the
-       WORKING agent (agent.py) to measure the turn distribution.
+    1. Runs the frozen 40-case / 56-trial evaluation battery
+       (REF-EV001..040, backends.py) through the WORKING agent
+       (agent.py) to measure the real turn distribution - the same
+       battery `run_eval.py --battery` reports on.
     2. Builds a trap case designed to confuse the loop without ever
        repeating an identical tool call (so de-duplication, a
        DIFFERENT guardrail, does not mask this specific failure).
@@ -24,28 +26,33 @@ WHAT THIS SCRIPT DOES, IN ORDER
     4. Runs the SAME trap through agent.run_case() (the restored
        agent) with a cap set to worst-case-legitimate + 1, and checks
        it stops LOUDLY with reason "step_cap".
-    5. Re-runs the six baseline cases with that cap enforced, to prove
+    5. Re-runs the 40-case battery with that cap enforced, to prove
        the fix does not truncate any legitimate run.
 ====================================================================
 """
-import config
-import backends
-from guardrails import GuardrailStop
+import statistics
 
-BASELINE_CASES = ["REF-5602", "REF-5750", "REF-5764", "REF-5766", "REF-5590", "REF-5772"]
+import backends
+import config
+from guardrails import GuardrailStop
+from harness import load_cases, load_key, run_set
+
 TRAP_CASE = "REF-5602"                 # real, valid referral - only its SCRIPT changes
 KILL_SWITCH_TURNS = 60                  # Step 2's "hard kill-switch" - bounds the
                                          # OFF-demo so it cannot hang a marker's
                                          # machine. It is not the fix.
 
 
-def run_baseline(run_case_fn):
-    return [run_case_fn(cid, problem="B") for cid in BASELINE_CASES]
+def battery_case_ids():
+    all_cases = load_cases()
+    cases = [c for c in all_cases if c.startswith("REF-EV")]
+    expected = ["REF-EV%03d" % i for i in range(1, 41)]
+    assert cases == expected, "frozen D5 battery is not exactly REF-EV001..040"
+    return cases
 
 
-def turn_stats(records):
-    turns = [r["turns"] for r in records]
-    import statistics
+def turn_stats(results):
+    turns = [r["record"]["turns"] for r in results]
     return statistics.median(turns), max(turns), turns
 
 
@@ -76,13 +83,16 @@ def main():
     from agent import run_case as run_case_fixed
     print()
     print("=" * 68)
-    print("  BASELINE (Phase 2 Step 1) - working agent, %d real cases"
-          % len(BASELINE_CASES))
+    print("  BASELINE (Phase 2 Step 1) - working agent, frozen 40-case battery")
     print("=" * 68)
-    baseline = run_baseline(run_case_fixed)
-    median, worst, turns = turn_stats(baseline)
+    cases = battery_case_ids()
+    key = load_key("B")
+    results, _ = run_set(cases, problem="B",
+                         trials_for=lambda cid: 1, verbose=False)
+    passed = sum(1 for r in results if r["passed"])
+    median, worst, turns = turn_stats(results)
     cap = worst + 1
-    print("  turns per case: %s" % turns)
+    print("  %d of %d cases passed the code check" % (passed, len(results)))
     print("  median turns = %s   worst-case turns = %s   ->  data-driven cap = %d"
           % (median, worst, cap))
 
@@ -130,16 +140,18 @@ def main():
 
     print()
     print("=" * 68)
-    print("  REGRESSION - the cap must not truncate legitimate runs")
+    print("  REGRESSION - the cap must not truncate the 40-case battery")
     print("=" * 68)
     config.MAX_TURNS = cap
-    regressed = run_baseline(run_case_fixed)
+    regressed, _ = run_set(cases, problem="B", trials_for=lambda cid: 1, verbose=False)
     config.MAX_TURNS = 8
-    truncated = [r for r in regressed if r["stopped_by"] == "step_cap"]
-    print("  %d of %d legitimate cases hit the new cap of %d"
-          % (len(truncated), len(regressed), cap))
+    truncated = [r for r in regressed if r["record"]["stopped_by"] == "step_cap"]
+    still_passed = sum(1 for r in regressed if r["passed"])
+    print("  %d of %d cases hit the new cap of %d" % (len(truncated), len(regressed), cap))
+    print("  pass rate: %d/%d (was %d/%d before the cap change)"
+          % (still_passed, len(regressed), passed, len(results)))
     print("  %s - worst legitimate run measured %d turns, cap is %d."
-          % ("PASS" if not truncated else "FAIL", worst, cap))
+          % ("PASS" if not truncated and still_passed == passed else "FAIL", worst, cap))
 
     print()
     print("=" * 68)

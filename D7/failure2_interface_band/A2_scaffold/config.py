@@ -24,7 +24,7 @@ import os
 # ─────────────────────────────────────────────────────────────────────
 # THE THREE STRINGS. Change these, change nothing else.
 # ─────────────────────────────────────────────────────────────────────
-BACKEND = "scripted"          # "scripted" | "live"
+BACKEND = "scripted"          # "scripted" | "live" - forced for D7: zero API key, zero network
 
 MODEL = "openai/gpt-4o-mini"  # only used when BACKEND == "live"
 BASE_URL = "https://openrouter.ai/api/v1"
@@ -38,6 +38,31 @@ API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 # WHICH PROBLEM. "A" = claims first response, "B" = referral coordination.
 # ─────────────────────────────────────────────────────────────────────
 PROBLEM = "B"
+
+# ─────────────────────────────────────────────────────────────────────
+# D2(b) ACI VERSION. V2 is the final submission interface.
+# V1 exists only for the controlled one-model comparison required by D2(b).
+# In Colab, set os.environ["VERSION"] before importing the modules,
+# then restart the runtime when you switch versions.
+# ─────────────────────────────────────────────────────────────────────
+VERSION = os.environ.get("VERSION", "v2").strip().lower()
+if VERSION not in {"v1", "v2"}:
+    raise ValueError("VERSION must be 'v1' or 'v2'")
+    
+# ─────────────────────────────────────────────────────────────────────
+# D2(c) TOOL-CALL GROUPING MODE
+# parallel = independent calls may share one model turn
+# serial   = at most one tool call per model turn
+# ─────────────────────────────────────────────────────────────────────
+TOOL_CALL_MODE = os.environ.get(
+    "TOOL_CALL_MODE",
+    "parallel"
+).strip().lower()
+
+if TOOL_CALL_MODE not in {"serial", "parallel"}:
+    raise ValueError(
+        "TOOL_CALL_MODE must be 'serial' or 'parallel'"
+    )
 
 # ─────────────────────────────────────────────────────────────────────
 # GUARDRAIL LIMITS (D3a). These are the code layer. Set them from
@@ -95,10 +120,8 @@ def data_root():
 # Checked against vendor pages 28 August 2026. RE-CHECK THEM: quoting a
 # price you did not verify is the kind of thing D6 is marked on.
 # ─────────────────────────────────────────────────────────────────────
-PRICE_IN = 0.10
-PRICE_OUT = 0.40
-
-
+PRICE_IN = 0.1
+PRICE_OUT = 0.4
 def _stale_bytecode_warning():
     """Detect Python reusing an out-of-date __pycache__ copy of THIS file.
 
@@ -141,6 +164,7 @@ def summary():
     where = "FREE, deterministic" if BACKEND == "scripted" else "LIVE - this costs money"
     model = "(no model)" if BACKEND == "scripted" else MODEL
     line = ("BACKEND=%s  %s  |  PROBLEM=%s  |  model=%s  |  "
-            "cap=%d turns  |  autonomy=%s"
-            % (BACKEND, where, PROBLEM, model, MAX_TURNS, AUTONOMY))
+            "VERSION=%s  |  cap=%d turns  |  autonomy=%s"
+            % (BACKEND, where, PROBLEM, model, VERSION,
+               MAX_TURNS, AUTONOMY))
     return line + _stale_bytecode_warning()

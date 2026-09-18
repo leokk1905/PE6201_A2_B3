@@ -31,7 +31,6 @@ grading a model is a claim that needs defending.
 import json
 import os
 import statistics
-from datetime import datetime
 
 import config
 from agent import run_case
@@ -151,9 +150,15 @@ def run_set(case_ids=None, problem=None, trials_for=None, verbose=False):
         for trial in range(1, trials_for(cid) + 1):
             record = run_case(cid, problem=problem, verbose=verbose)
             passed, fails = code_check(record, expected)
-            results.append({"case_id": cid, "trial": trial, "passed": passed,
-                            "fails": fails, "record": record,
-                            "family": expected.get("family")})
+            results.append({
+                "case_id": cid,
+                "trial": trial,
+                "passed": passed,
+                "fails": fails,
+                "record": record,
+                "family": expected.get("family"),
+                "negative": _is_negative(expected),
+            })
             if trial == 1:
                 judgement_queue.append(prepare_judgement_check(record, expected))
 
@@ -173,33 +178,89 @@ def _is_negative(expected):
 # REPORTING
 # =====================================================================
 def report(results):
-    """The result table. EVERY pass rate is printed with its trial count,
-    because a pass rate without one is not a measurement."""
+    """Print and return the D4/D5 measurement summary.
+
+    Pass rates are always reported with trial counts. Live token counts,
+    latency and cost come from the records captured during the run.
+    """
     total = len(results)
     passed = sum(1 for r in results if r["passed"])
+
+    negative_results = [r for r in results if r.get("negative")]
+    negative_total = len(negative_results)
+    negative_passed = sum(1 for r in negative_results if r["passed"])
+
     turns = [r["record"]["turns"] for r in results]
-    cost = sum(r["record"]["cost_usd"] for r in results)
+    seconds = [r["record"].get("seconds", 0.0) for r in results]
+
+    tokens_in = sum(r["record"].get("tokens_in", 0) for r in results)
+    tokens_out = sum(r["record"].get("tokens_out", 0) for r in results)
+    cost = sum(r["record"].get("cost_usd", 0.0) for r in results)
+
+    mean_turns = statistics.mean(turns) if turns else None
+    median_turns = statistics.median(turns) if turns else None
+    worst_turns = max(turns) if turns else None
+
+    mean_seconds = statistics.mean(seconds) if seconds else None
+    median_seconds = statistics.median(seconds) if seconds else None
+
+    mean_cost = cost / total if total else 0.0
+    median_cost = (
+        statistics.median(
+            [r["record"].get("cost_usd", 0.0) for r in results]
+        )
+        if results else None
+    )
+
+    pass_rate = passed / total if total else 0.0
+    negative_pass_rate = (
+        negative_passed / negative_total if negative_total else None
+    )
 
     print()
     print("=" * 68)
     print("  RESULTS   %d of %d trials passed   (%.0f%%)"
-          % (passed, total, 100.0 * passed / total if total else 0))
+          % (passed, total, 100.0 * pass_rate))
     print("=" * 68)
-    print("  trials              %d" % total)
-    print("  median turns        %s" % (statistics.median(turns) if turns else "-"))
-    print("  worst case turns    %s" % (max(turns) if turns else "-"))
-    print("  hit the step cap    %d"
-          % sum(1 for r in results if r["record"]["stopped_by"] == "step_cap"))
-    print("  total cost          US$%.4f   (%s backend)"
+    print("  trials                 %d" % total)
+    print("  negative trials        %d" % negative_total)
+    if negative_total:
+        print("  negative passed        %d of %d   (%.0f%%)"
+              % (negative_passed, negative_total,
+                 100.0 * negative_pass_rate))
+
+    print("  mean turns             %s"
+          % ("%.2f" % mean_turns if mean_turns is not None else "-"))
+    print("  median turns           %s"
+          % (median_turns if median_turns is not None else "-"))
+    print("  worst case turns       %s"
+          % (worst_turns if worst_turns is not None else "-"))
+
+    print("  total input tokens     %d" % tokens_in)
+    print("  total output tokens    %d" % tokens_out)
+
+    print("  total cost             US$%.6f   (%s backend)"
           % (cost, results[0]["record"]["backend"] if results else "-"))
+    print("  mean cost / trial      US$%.6f" % mean_cost)
+    print("  median cost / trial    %s"
+          % ("US$%.6f" % median_cost if median_cost is not None else "-"))
+
+    print("  mean latency           %s"
+          % ("%.3fs" % mean_seconds if mean_seconds is not None else "-"))
+    print("  median latency         %s"
+          % ("%.3fs" % median_seconds if median_seconds is not None else "-"))
+
+    print("  hit the step cap       %d"
+          % sum(1 for r in results
+                if r["record"].get("stopped_by") == "step_cap"))
     print()
 
     failures = [r for r in results if not r["passed"]]
     if failures:
         print("  FAILED TRIALS - each one is either a bug or a wrong label:")
         for r in failures:
-            print("    %-12s trial %d  [%s]" % (r["case_id"], r["trial"],
-                                                r["family"]))
+            print("    %-12s trial %d  [%s]"
+                  % (r["case_id"], r["trial"], r["family"]))
             for f in r["fails"]:
                 print("        %s" % f)
         print()
@@ -212,132 +273,22 @@ def report(results):
         print("  That is HALF the check. Work through the judgement queue")
         print("  before you believe this number.")
     print()
-    return {"trials": total, "passed": passed,
-            "pass_rate": passed / total if total else 0.0,
-            "median_turns": statistics.median(turns) if turns else None,
-            "cost_usd": cost}
 
-
-def save_results_to_txt(results, summary, filename="evaluation_report.txt"):
-    """Save evaluation results to a human-readable text file.
-
-    Creates a detailed report with:
-    - Summary statistics (pass rate, costs, turns)
-    - Per-case breakdown with financial metrics
-    - Failed cases with reasons
-    - Token usage distribution
-    """
-    with open(filename, 'w', encoding='utf-8') as f:
-        # Header
-        f.write("="*70 + "\n")
-        f.write("PE6201 Assignment 2 - Evaluation Report\n")
-        f.write("="*70 + "\n")
-        f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"Configuration: {config.summary()}\n")
-        f.write(f"Data Path: {config.data_root()}\n")
-        f.write("="*70 + "\n\n")
-
-        # Summary Statistics
-        f.write("SUMMARY STATISTICS\n")
-        f.write("-"*70 + "\n")
-        f.write(f"Total Trials:        {summary['trials']}\n")
-        f.write(f"Passed:              {summary['passed']}\n")
-        f.write(f"Failed:              {summary['trials'] - summary['passed']}\n")
-        f.write(f"Pass Rate:           {summary['pass_rate']*100:.1f}%\n")
-        f.write(f"Median Turns:        {summary.get('median_turns', 'N/A')}\n")
-        f.write(f"Total Cost:          US${summary['cost_usd']:.4f}\n")
-
-        # Token statistics
-        if results:
-            tokens_in_list = [r['record']['tokens_in'] for r in results]
-            tokens_out_list = [r['record']['tokens_out'] for r in results]
-            time_list = [r['record']['seconds'] for r in results]
-
-            f.write(f"\nToken Usage:\n")
-            f.write(f"  Total Input:       {sum(tokens_in_list):,} tokens\n")
-            f.write(f"  Total Output:      {sum(tokens_out_list):,} tokens\n")
-            f.write(f"  Avg Input/Case:    {statistics.mean(tokens_in_list):,.0f} tokens\n")
-            f.write(f"  Avg Output/Case:   {statistics.mean(tokens_out_list):,.0f} tokens\n")
-
-            f.write(f"\nExecution Time:\n")
-            f.write(f"  Total Time:        {sum(time_list):.2f} seconds\n")
-            f.write(f"  Avg Time/Case:     {statistics.mean(time_list):.3f} seconds\n")
-
-            turns_list = [r['record']['turns'] for r in results]
-            f.write(f"\nTurn Distribution:\n")
-            f.write(f"  Min Turns:         {min(turns_list)}\n")
-            f.write(f"  Median Turns:      {statistics.median(turns_list)}\n")
-            f.write(f"  Max Turns:         {max(turns_list)}\n")
-            f.write(f"  Mean Turns:        {statistics.mean(turns_list):.2f}\n")
-
-        f.write("\n" + "="*70 + "\n\n")
-
-        # Failed Cases
-        failures = [r for r in results if not r["passed"]]
-        if failures:
-            f.write("FAILED CASES\n")
-            f.write("-"*70 + "\n")
-            f.write(f"Total Failures: {len(failures)}\n\n")
-
-            for r in failures:
-                f.write(f"Case ID:     {r['case_id']}\n")
-                f.write(f"Trial:       {r['trial']}\n")
-                f.write(f"Family:      {r.get('family', 'N/A')}\n")
-                f.write(f"Decision:    {r['record'].get('decision', 'N/A')}\n")
-                f.write(f"Turns:       {r['record']['turns']}\n")
-                f.write(f"Cost:        US${r['record']['cost_usd']:.6f}\n")
-                f.write(f"Failures:\n")
-                for fail in r['fails']:
-                    f.write(f"  - {fail}\n")
-                f.write(f"Reason:      {r['record'].get('reason', 'N/A')}\n")
-                f.write("-"*70 + "\n")
-        else:
-            f.write("FAILED CASES\n")
-            f.write("-"*70 + "\n")
-            f.write("No failures - all trials passed the code check!\n\n")
-
-        f.write("\n" + "="*70 + "\n\n")
-
-        # Per-Case Details
-        f.write("PER-CASE BREAKDOWN\n")
-        f.write("-"*70 + "\n\n")
-
-        # Group by case_id
-        by_case = {}
-        for r in results:
-            cid = r['case_id']
-            if cid not in by_case:
-                by_case[cid] = []
-            by_case[cid].append(r)
-
-        for case_id in sorted(by_case.keys()):
-            trials = by_case[case_id]
-            f.write(f"Case: {case_id}\n")
-
-            for i, trial in enumerate(trials, 1):
-                rec = trial['record']
-                status = "PASS" if trial['passed'] else "FAIL"
-
-                f.write(f"  Trial {i}: {status}\n")
-                f.write(f"    Decision:      {rec.get('decision', 'N/A')}\n")
-                f.write(f"    Turns:         {rec['turns']}\n")
-                f.write(f"    Tokens In:     {rec['tokens_in']:,}\n")
-                f.write(f"    Tokens Out:    {rec['tokens_out']:,}\n")
-                f.write(f"    Cost:          US${rec['cost_usd']:.6f}\n")
-                f.write(f"    Time:          {rec['seconds']:.3f}s\n")
-                f.write(f"    Tools Called:  {', '.join(rec.get('evidence', []))}\n")
-
-                if rec.get('booked'):
-                    b = rec['booked']
-                    f.write(f"    Booked:        {b.get('clinic')} on {b.get('date')} at {b.get('time')}\n")
-
-                if trial.get('fails'):
-                    f.write(f"    Failures:      {'; '.join(trial['fails'])}\n")
-
-                f.write("\n")
-
-        f.write("="*70 + "\n")
-        f.write("END OF REPORT\n")
-        f.write("="*70 + "\n")
-
-    return filename
+    return {
+        "trials": total,
+        "passed": passed,
+        "pass_rate": pass_rate,
+        "negative_trials": negative_total,
+        "negative_passed": negative_passed,
+        "negative_pass_rate": negative_pass_rate,
+        "mean_turns": mean_turns,
+        "median_turns": median_turns,
+        "worst_case_turns": worst_turns,
+        "tokens_in": tokens_in,
+        "tokens_out": tokens_out,
+        "cost_usd": cost,
+        "mean_cost_usd": mean_cost,
+        "median_cost_usd": median_cost,
+        "mean_seconds": mean_seconds,
+        "median_seconds": median_seconds,
+    }

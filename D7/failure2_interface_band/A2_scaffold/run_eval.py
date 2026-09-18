@@ -5,6 +5,7 @@ PE6201 · A2 scaffold — ENTRY POINT
     python3 run_eval.py              run every SCRIPTED case
     python3 run_eval.py REF-5602     run one case, showing every turn
     python3 run_eval.py --all        run every case in the work queue
+    python3 run_eval.py --battery    run the frozen 40-case D5 evaluation set
     python3 run_eval.py --prompt     print what the model is told, and stop
 
 THIS IS WHAT A MARKER RUNS. Clone, `python3 run_eval.py`, numbers come
@@ -21,7 +22,7 @@ import sys
 
 import config
 from backends import SCRIPTS
-from harness import load_cases, load_key, report, run_set, save_results_to_txt
+from harness import load_cases, load_key, report, run_set
 
 
 def main(argv):
@@ -65,7 +66,23 @@ def main(argv):
         return 0 if results[0]["passed"] else 1
 
     # ---- the set ------------------------------------------------------
-    if "--all" in flags:
+    if "--battery" in flags:
+        # Frozen D4/D5 evaluation set created by the team.
+        # The data store also contains 15 shipped fixture referrals, so the
+        # live battery must explicitly select only REF-EV001 ... REF-EV040.
+        all_cases = load_cases()
+        cases = [c for c in all_cases if c.startswith("REF-EV")]
+        expected_cases = [f"REF-EV{i:03d}" for i in range(1, 41)]
+
+        if cases != expected_cases:
+            print("\n  ERROR: frozen D5 battery is not exactly REF-EV001..REF-EV040.")
+            print("  Found: %s" % ", ".join(cases))
+            return 1
+
+        print("\n  Running FROZEN D5 BATTERY: 40 cases / 56 trials.")
+        print("  Ordinary cases run once; negative cases run three times.")
+
+    elif "--all" in flags:
         cases = load_cases()
         print("\n  Running EVERY case in the work queue (%d)." % len(cases))
         print("  Cases with no script will stop the run - that is the")
@@ -88,18 +105,15 @@ def main(argv):
     results, queue = run_set(cases)
     summary = report(results)
 
-    # Save JSON results
-    with open("results.json", "w", encoding="utf-8") as fh:
+    output_file = "results_d5_live.json" if "--battery" in flags else "results.json"
+
+    with open(output_file, "w", encoding="utf-8") as fh:
         json.dump({"config": config.summary(), "summary": summary,
                    "results": [{k: v for k, v in r.items()} for r in results],
                    "judgement_queue": queue}, fh, indent=2, default=str)
-    print("  Wrote results.json - commit it. Your result tables come from")
-    print("  here, and a marker reads it alongside your report.")
 
-    # Save human-readable text report
-    txt_file = save_results_to_txt(results, summary)
-    print(f"  Wrote {txt_file} - detailed human-readable report with")
-    print("  financial metrics, per-case breakdown, and failure analysis.")
+    print("  Wrote %s - commit it. Your result tables come from" % output_file)
+    print("  here, and a marker reads it alongside your report.")
     print()
     return 0
 

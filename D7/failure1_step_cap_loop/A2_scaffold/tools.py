@@ -52,6 +52,9 @@ against no policy at all.
 import json
 import os
 
+# Python date arithmetic
+from datetime import datetime, timedelta 
+
 import config
 
 _CACHE = {}
@@ -205,15 +208,29 @@ def check_referral_criteria(specialty, referral_id):
             band, weeks = b["band"], b["window_weeks"]
             break
 
+    # Get the system reference date
+    # Insert as_of() inside here instead of as separated tool outside
+    anchor = as_of()
+    
+    # Set the start of the valid booking window
+    window_start = anchor
+    
+    # Calculate the end of the valid booking window
+    window_end = (datetime.strptime(anchor, "%Y-%m-%d")
+                  + timedelta(weeks=weeks)).strftime("%Y-%m-%d")
+
     return {"red_flag_term": red,
             "right_department": right_department,
             "missing_tests": missing,
             "band": band,
-            "window_weeks": weeks}
+            "window_weeks": weeks,
+            "as_of": anchor,
+            "window_start": window_start,
+            "window_end": window_end}
 
-
+"""   We don't use this anymore        
 def get_clinic_slots(specialty, band, **window):
-    """Find appointment slots that exist AND are free AND are legal.
+    Find appointment slots that exist AND are free AND are legal.
 
     WHAT IT DOES   three filters at once: right department, right band,
                    inside the window, with a place left.
@@ -245,7 +262,7 @@ def get_clinic_slots(specialty, band, **window):
     The window is passed as **kwargs so `from` can be used as a name -
     it is a Python keyword and cannot be a normal parameter. That is a
     small ugliness bought deliberately, to keep the domain word.
-    """
+    
     lo = window.get("from", "0000-00-00")
     hi = window.get("to", "9999-99-99")
     return [s for s in _load("B", "clinic_slots")
@@ -253,6 +270,54 @@ def get_clinic_slots(specialty, band, **window):
             and s["band"] == band
             and lo <= s["date"] <= hi
             and s["capacity_remaining"] > 0]
+"""
+
+# The tool changed for V1 -> V2
+def _get_clinic_slots_v1(specialty, **window):
+    """V1: deliberately weak slot interface.
+
+    It filters by specialty, date and remaining capacity, but it does NOT
+    require or return the urgency band. This is kept only so we can
+    measure the v1 -> v2 rewrite on one live model.
+    """
+    lo = window.get("from", "0000-00-00")
+    hi = window.get("to", "9999-99-99")
+    rows = [s for s in _load("B", "clinic_slots")
+            if s["specialty"] == specialty
+            and lo <= s["date"] <= hi
+            and s["capacity_remaining"] > 0]
+
+    # v1 return shape deliberately omits `band`; this is the error surface
+    # that v2 removes. Keep the observation bounded for prompt cost.
+    return [{"clinic": s["clinic"],
+             "date": s["date"],
+             "time": s["time"],
+             "capacity_remaining": s["capacity_remaining"]}
+            for s in rows[:10]]
+
+
+def _get_clinic_slots_v2(specialty, band, **window):
+    """Final V2: band is mandatory and wrong-band rows are impossible.
+
+    The function also filters out full slots and bounds the returned list,
+    so the model only sees free, band-correct candidates it may consider.
+    """
+    lo = window.get("from", "0000-00-00")
+    hi = window.get("to", "9999-99-99")
+    rows = [s for s in _load("B", "clinic_slots")
+            if s["specialty"] == specialty
+            and s["band"] == band
+            and lo <= s["date"] <= hi
+            and s["capacity_remaining"] > 0]
+    return rows[:10]
+
+
+# The agent still sees one tool named `get_clinic_slots`. The environment
+# selects which interface is under that name for the controlled test.
+# Final/default submission behaviour is V2.
+get_clinic_slots = (_get_clinic_slots_v1
+                    if config.VERSION == "v1"
+                    else _get_clinic_slots_v2)
 
 
 def book_slot(clinic, date, time, referral_id):
@@ -544,7 +609,8 @@ REGISTRY = {
         "check_referral_criteria": check_referral_criteria,
         "get_clinic_slots": get_clinic_slots,
         "book_slot": book_slot,
-        "as_of": as_of,
+        # Remove as_of from registry
+        # "as_of": as_of,
     },
     "A": {
         "get_claim": get_claim,
@@ -572,76 +638,267 @@ GATED_ACTION = {"B": "book_slot", "A": "issue_decision_letter"}
 # YOU read. They overlap, but they are not the same document: a
 # descriptor is written to be acted on, a comment to be understood.
 DESCRIPTORS = {
-    # ---- Problem B -------------------------------------------------
+    # ---- Problem B (OLD)-------------------------------------------------
+    # "get_referral": {
+        # "name": "get_referral",
+        # "purpose": "Fetch the referral you have been asked to handle.",
+        # "when": "Turn 1, alone. Everything else needs what it returns, so "
+                # "nothing can be run alongside it.",
+        # "args": {"referral_id": "str, the case id you were given"},
+        # "returns": "{referral_id, patient_id, referring_clinic, specialty, "
+                   # "date_received, clinical_summary, tests_attached, "
+                   # "tests_attached_on (may be absent)}",
+        # "failure": "Returns None when no referral has that id. That is a "
+                   # "broken case, not an outcome - stop and say so rather "
+                   # "than inventing a decision.",
+    # },
+    # "lookup_patient": {
+        # "name": "lookup_patient",
+        # "purpose": "The patient's existing appointments and how to contact them.",
+        # "when": "Any time after get_referral. Independent of the criteria "
+                # "check, so the two can go in one turn.",
+        # "args": {"patient_id": "str, from the referral"},
+        # "returns": "{patient: {patient_id, date_of_birth, "
+                   # "existing_appointments[]}, contact: {method, value}}",
+        # "failure": "Returns None when the patient does not exist - a broken "
+                   # "case. An EMPTY existing_appointments list is normal and "
+                   # "means nothing is booked, which is not the same thing.",
+    # },
+    # "check_referral_criteria": {
+        # "name": "check_referral_criteria",
+        # "purpose": "Run the department's protocol against the referral's free "
+                   # "text: red flags, right department, mandatory tests, band.",
+        # "when": "Immediately after get_referral. Its answers decide whether "
+                # "the run continues at all.",
+        # "args": {"specialty": "str, the code on the referral",
+                 # "referral_id": "str, the case id"},
+        # "returns": "{red_flag_term (str or None), right_department (bool), "
+                   # "missing_tests (list), band, window_weeks, as_of, "
+                   # "window_start, window_end}",
+        # "failure": "Returns None when the referral or specialty does not "
+                   # "exist. IT DECIDES NOTHING - it reports five facts. Apply "
+                   # "them in order: red flag, then wrong department, then "
+                   # "missing test, then duplicate. STOP at the first that "
+                   # "fires. band 'routine' is the default when no trigger "
+                   # "phrase appears; that is normal, not a failure.",
+    # },
+    # "book_slot": {
+        # "name": "book_slot",
+        # "purpose": "Commit the appointment. THE IRREVERSIBLE STEP.",
+        # "when": "Last, and only when all four checks passed and a legal slot "
+                # "was found. Never speculatively.",
+        # "args": {"clinic": "str, from the chosen slot",
+                 # "date": "str, from the chosen slot",
+                 # "time": "str, from the chosen slot",
+                 # "referral_id": "str, the case id"},
+        # "returns": "{booked: true, clinic, date, time, referral_id}",
+        # "failure": "This call is GATED: it may be held for human approval "
+                   # "depending on the autonomy setting. If it is held, that is "
+                   # "the correct outcome and not an error - report that the "
+                   # "booking awaits approval, and name the slot you would take.",
+    # },
+    
+    # ---- Problem B (NEW)-------------------------------------------------
+    
     "get_referral": {
-        "name": "get_referral",
-        "purpose": "Fetch the referral you have been asked to handle.",
-        "when": "Turn 1, alone. Everything else needs what it returns, so "
-                "nothing can be run alongside it.",
-        "args": {"referral_id": "str, the case id you were given"},
-        "returns": "{referral_id, patient_id, referring_clinic, specialty, "
-                   "date_received, clinical_summary, tests_attached, "
-                   "tests_attached_on (may be absent)}",
-        "failure": "Returns None when no referral has that id. That is a "
-                   "broken case, not an outcome - stop and say so rather "
-                   "than inventing a decision.",
-    },
-    "lookup_patient": {
-        "name": "lookup_patient",
-        "purpose": "The patient's existing appointments and how to contact them.",
-        "when": "Any time after get_referral. Independent of the criteria "
-                "check, so the two can go in one turn.",
-        "args": {"patient_id": "str, from the referral"},
-        "returns": "{patient: {patient_id, date_of_birth, "
-                   "existing_appointments[]}, contact: {method, value}}",
-        "failure": "Returns None when the patient does not exist - a broken "
-                   "case. An EMPTY existing_appointments list is normal and "
-                   "means nothing is booked, which is not the same thing.",
-    },
-    "check_referral_criteria": {
-        "name": "check_referral_criteria",
-        "purpose": "Run the department's protocol against the referral's free "
-                   "text: red flags, right department, mandatory tests, band.",
-        "when": "Immediately after get_referral. Its answers decide whether "
-                "the run continues at all.",
-        "args": {"specialty": "str, the code on the referral",
-                 "referral_id": "str, the case id"},
-        "returns": "{red_flag_term (str or None), right_department (bool), "
-                   "missing_tests (list), band, window_weeks}",
-        "failure": "Returns None when the referral or specialty does not "
-                   "exist. IT DECIDES NOTHING - it reports five facts. Apply "
-                   "them in order: red flag, then wrong department, then "
-                   "missing test, then duplicate. STOP at the first that "
-                   "fires. band 'routine' is the default when no trigger "
-                   "phrase appears; that is normal, not a failure.",
-    },
-    "book_slot": {
-        "name": "book_slot",
-        "purpose": "Commit the appointment. THE IRREVERSIBLE STEP.",
-        "when": "Last, and only when all four checks passed and a legal slot "
-                "was found. Never speculatively.",
-        "args": {"clinic": "str, from the chosen slot",
-                 "date": "str, from the chosen slot",
-                 "time": "str, from the chosen slot",
-                 "referral_id": "str, the case id"},
-        "returns": "{booked: true, clinic, date, time, referral_id}",
-        "failure": "This call is GATED: it may be held for human approval "
-                   "depending on the autonomy setting. If it is held, that is "
-                   "the correct outcome and not an error - report that the "
-                   "booking awaits approval, and name the slot you would take.",
-    },
-    "as_of": {
-        "name": "as_of",
-        "purpose": "The date every urgency window is measured FROM.",
-        "when": "Before computing any window. Cheap - call it rather than "
-                "assuming.",
-        "args": {},
-        "returns": "a date string, e.g. '2026-09-09'",
-        "failure": "Never fails. WATCH OUT: windows are counted from THIS, "
-                   "not from the referral's date_received. They are equal on "
-                   "some referrals and not on others.",
+        "signature": "get_referral(referral_id: str)",
+        "what": (
+            "Retrieve the referral record for the case being processed."
+        ),
+        "input": {
+            "referral_id": (
+                "Referral ID supplied by the case, e.g. 'REF-5602'."
+            ),
+        },
+        "returns": (
+            "At most 1 referral record containing referral_id, patient_id, "
+            "referring_clinic, specialty, date_received, clinical_summary, "
+            "tests_attached and optional tests_attached_on."
+        ),
+        "fails_when": (
+            "Returns None when no referral exists with that ID. "
+            "This indicates a broken case, not a referral outcome."
+        ),
+        "irreversible": "NO",
     },
 
+
+    "lookup_patient": {
+        "signature": "lookup_patient(patient_id: str)",
+        "what": (
+            "Retrieve the patient's existing appointments and contact details "
+            "so duplicate future appointments can be checked."
+        ),
+        "input": {
+            "patient_id": (
+                "Patient ID returned by get_referral."
+            ),
+        },
+        "returns": (
+            "At most 1 structured result containing patient details, "
+            "existing_appointments[], and contact details."
+        ),
+        "fails_when": (
+            "Returns None when the patient does not exist. "
+            "An empty existing_appointments list is valid and means that "
+            "no appointments are currently recorded."
+        ),
+        "irreversible": "NO",
+    },
+
+
+    "check_referral_criteria": {
+        "signature": (
+            "check_referral_criteria(specialty: str, referral_id: str)"
+        ),
+        "what": (
+            "Apply the specialty protocol and report red flags, department "
+            "match, missing mandatory tests, urgency band, and the valid "
+            "booking window. This tool reports facts; it does not choose "
+            "the final outcome."
+        ),
+        "input": {
+            "specialty": (
+                "Specialty code from the referral, e.g. 'OPH'."
+            ),
+            "referral_id": (
+                "Referral ID for the case being processed."
+            ),
+        },
+        "returns": (
+            "At most 1 structured result containing red_flag_term, "
+            "right_department, missing_tests, band, window_weeks, as_of, "
+            "window_start, and window_end."
+        ),
+        "fails_when": (
+            "Returns None when the referral or specialty does not exist. "
+            "Apply the returned checks in order: red flag, wrong department, "
+            "missing test, then duplicate appointment. Stop at the first "
+            "condition that requires an outcome."
+        ),
+        "irreversible": "NO",
+    },
+
+
+    "book_slot": {
+        "signature": (
+            "book_slot(clinic: str, date: str, time: str, referral_id: str)"
+        ),
+        "what": (
+            "Commit the selected appointment slot after all referral checks "
+            "have passed."
+        ),
+        "input": {
+            "clinic": (
+                "Clinic identifier from the selected legal slot."
+            ),
+            "date": (
+                "Appointment date from the selected legal slot."
+            ),
+            "time": (
+                "Appointment time from the selected legal slot."
+            ),
+            "referral_id": (
+                "Referral ID for the current case."
+            ),
+        },
+        "returns": (
+            "At most 1 confirmation containing booked=true, clinic, date, "
+            "time, and referral_id."
+        ),
+        "fails_when": (
+            "The action may be held by the autonomy gate for human approval. "
+            "Do not call it unless all checks passed and a legal slot has "
+            "already been selected."
+        ),
+        "irreversible": "YES - this is the gated action for Problem B.",
+    },
+
+
+    # ---------------------------------------------------------------
+    # D2(b) v1 -> v2 experiment for get_clinic_slots
+    # ---------------------------------------------------------------
+
+    "get_clinic_slots": (
+        {
+            # V1: weaker interface. Urgency band is not required.
+            "signature": (
+                "get_clinic_slots(specialty: str, from: str, to: str)"
+            ),
+            "what": (
+                "Find free appointment slots for one specialty inside a "
+                "date window."
+            ),
+            "input": {
+                "specialty": (
+                    "Specialty code from the referral."
+                ),
+                "from": (
+                    "Start date of the booking window."
+                ),
+                "to": (
+                    "End date of the booking window."
+                ),
+            },
+            "returns": (
+                "At most 10 free slot records containing clinic, date, time, "
+                "and capacity_remaining. The urgency band is not returned."
+            ),
+            "fails_when": (
+                "Returns [] when no free slot exists in the supplied date "
+                "window. V1 does not enforce urgency-band matching, so "
+                "wrong-band slots may be returned."
+            ),
+            "irreversible": "NO",
+        }
+
+        if config.VERSION == "v1"
+
+        else
+
+        {
+            # V2: final Poka-Yoke interface. Band is mandatory.
+            "signature": (
+                "get_clinic_slots(specialty: str, band: str, "
+                "from: str, to: str)"
+            ),
+            "what": (
+                "Find free appointment slots for one specialty in the "
+                "required urgency band and inside the approved clinical "
+                "window."
+            ),
+            "input": {
+                "specialty": (
+                    "Specialty code from the referral."
+                ),
+                "band": (
+                    "REQUIRED. Use urgent, soon, or routine exactly as "
+                    "returned by check_referral_criteria."
+                ),
+                "from": (
+                    "Use window_start returned by "
+                    "check_referral_criteria."
+                ),
+                "to": (
+                    "Use window_end returned by "
+                    "check_referral_criteria."
+                ),
+            },
+            "returns": (
+                "At most 10 free slot records containing clinic, specialty, "
+                "band, date, time, and capacity_remaining. Only slots in "
+                "the requested urgency band are returned."
+            ),
+            "fails_when": (
+                "Returns [] when no legal free slot exists in the requested "
+                "band and clinical window. Do not widen the window or change "
+                "the urgency band."
+            ),
+            "irreversible": "NO",
+        }
+    ),
+
+      
     # ---- Problem A -------------------------------------------------
     "get_claim": {
         "name": "get_claim",
@@ -729,29 +986,31 @@ DESCRIPTORS = {
                    "lines_resolved must equal the number of lines on the "
                    "claim - if it does not, you have not finished.",
     },
-
-    "get_clinic_slots": {
-        "name": "get_clinic_slots",
-        "purpose": "Find appointment slots that actually exist and are free, "
-                   "for one specialty in one urgency band inside a date window.",
-        "when": "AFTER all four gates pass. Never before - a red flag or a "
-                "missing mandatory test ends the run and a slot query at that "
-                "point is a wasted call and a wrong record.",
-        "args": {
-            "specialty": "str, the code from the referral, e.g. 'OPH'",
-            "band": "str, REQUIRED, one of urgent|soon|routine, from "
-                    "check_referral_criteria - not your own judgement",
-            "from/to": "str dates, the window measured from as_of()",
-        },
-        "returns": "list of {clinic, specialty, band, date, time, "
-                   "capacity_remaining}, only rows with capacity above zero",
-        "failure": "Returns an EMPTY LIST when nothing is free in that window. "
-                   "Empty means escalate - 'no slot in window' - and it does "
-                   "NOT mean widen the window or drop the band. A slot with "
-                   "capacity_remaining 0 exists and is full; that is a "
-                   "different fact from a slot not existing, and neither is a "
-                   "reason to book outside the band.",
-    },
+    
+    # old get_clinic_slots descriptors
+    # "get_clinic_slots": {
+        # "name": "get_clinic_slots",
+        # "purpose": "Find appointment slots that actually exist and are free, "
+                   # "for one specialty in one urgency band inside a date window.",
+        # "when": "AFTER all four gates pass. Never before - a red flag or a "
+                # "missing mandatory test ends the run and a slot query at that "
+                # "point is a wasted call and a wrong record.",
+        # "args": {
+            # "specialty": "str, the code from the referral, e.g. 'OPH'",
+            # "band": "str, REQUIRED, one of urgent|soon|routine, from "
+                    # "check_referral_criteria - not your own judgement",
+            # "from/to": "str dates, use window_start/window_end returned by "
+                       # "check_referral_criteria",
+        # },
+        # "returns": "list of {clinic, specialty, band, date, time, "
+                   # "capacity_remaining}, only rows with capacity above zero",
+        # "failure": "Returns an EMPTY LIST when nothing is free in that window. "
+                   # "Empty means escalate - 'no slot in window' - and it does "
+                   # "NOT mean widen the window or drop the band. A slot with "
+                   # "capacity_remaining 0 exists and is full; that is a "
+                   # "different fact from a slot not existing, and neither is a "
+                   # "reason to book outside the band.",
+    # },
     "get_preauthorisation": {
         "name": "get_preauthorisation",
         "purpose": "Find a pre-authorisation covering one member for one "
