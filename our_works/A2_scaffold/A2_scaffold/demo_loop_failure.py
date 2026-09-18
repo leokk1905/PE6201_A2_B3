@@ -69,7 +69,7 @@ def main(case=None, problem=None):
     # ---- AFTER: the same agent, MINUS the de-duplication guard ------
     backends.SCRIPTS[CASE] = _looping_script(CASE)
     real_check = Guardrails.check_duplicate
-    Guardrails.check_duplicate = lambda self, tool, args: None   # <- the deletion
+    Guardrails.check_duplicate = lambda self, tool, args, turn=None: None   # <- the deletion
     try:
         after = run_case(CASE, problem=problem)
     finally:

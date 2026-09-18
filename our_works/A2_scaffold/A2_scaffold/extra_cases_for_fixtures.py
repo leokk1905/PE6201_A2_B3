@@ -1,9 +1,3 @@
-# =============================================================================
-# GENERATED EXTRA CASES
-# Generated on: 2026-09-08 16:33:40
-# Total cases: 40
-# =============================================================================
-
 EXTRA_REFERRALS = [
     {"referral_id": "REF-5750", "patient_id": "P-1250", "referring_clinic": "Bedok Family Practice", "specialty": "OPH", "date_received": "2026-09-09", "clinical_summary": "Gradual deterioration in vision over several months. Floaters noted. Query retinal change.", "tests_attached": ["VF-01"], "tests_attached_on": "2026-09-02"},
     {"referral_id": "REF-5751", "patient_id": "P-1251", "referring_clinic": "Clementi Medical", "specialty": "CARD", "date_received": "2026-09-09", "clinical_summary": "Intermittent palpitations noticed over past 3 months. No syncope.", "tests_attached": ["ECG-12", "BNP-01"], "tests_attached_on": "2026-09-02"},
