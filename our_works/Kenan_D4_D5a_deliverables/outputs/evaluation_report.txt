@@ -1,0 +1,839 @@
+======================================================================
+PE6201 Assignment 2 - Evaluation Report
+======================================================================
+Generated: 2026-09-17 23:01:30
+Configuration: BACKEND=scripted  FREE, deterministic  |  PROBLEM=B  |  model=(no model)  |  cap=8 turns  |  autonomy=confirm
+Data Path: C:\Users\Lenovo\Desktop\601\A2_reference_data
+======================================================================
+
+SUMMARY STATISTICS
+----------------------------------------------------------------------
+Total Trials:        81
+Passed:              81
+Failed:              0
+Pass Rate:           100.0%
+Median Turns:        2
+Total Cost:          US$0.1153
+
+Token Usage:
+  Total Input:       1,013,400 tokens
+  Total Output:      34,920 tokens
+  Avg Input/Case:    12,511 tokens
+  Avg Output/Case:   431 tokens
+
+Execution Time:
+  Total Time:        0.01 seconds
+  Avg Time/Case:     0.000 seconds
+
+Turn Distribution:
+  Min Turns:         2
+  Median Turns:      2
+  Max Turns:         4
+  Mean Turns:        2.59
+
+======================================================================
+
+FAILED CASES
+----------------------------------------------------------------------
+No failures - all trials passed the code check!
+
+
+======================================================================
+
+PER-CASE BREAKDOWN
+----------------------------------------------------------------------
+
+Case: REF-5602
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.007s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, get_clinic_slots, book_slot
+    Booked:        OPH-C2 on 2026-10-14 at 11:20
+
+Case: REF-5750
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        OPH-C4 on 2026-10-07 at 09:00
+
+Case: REF-5751
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        CARD-C5 on 2026-10-14 at 10:20
+
+Case: REF-5752
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        ORT-C6 on 2026-10-21 at 11:40
+
+Case: REF-5753
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        DER-C7 on 2026-10-07 at 12:00
+
+Case: REF-5754
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        ENT-C8 on 2026-10-14 at 13:20
+
+Case: REF-5755
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        OPH-C9 on 2026-10-21 at 14:40
+
+Case: REF-5756
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        CARD-C10 on 2026-10-07 at 09:00
+
+Case: REF-5757
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        ORT-C11 on 2026-10-14 at 10:20
+
+Case: REF-5758
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        DER-C12 on 2026-10-21 at 11:40
+
+Case: REF-5759
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        ENT-C13 on 2026-10-07 at 12:00
+
+Case: REF-5760
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        OPH-C14 on 2026-10-14 at 13:20
+
+Case: REF-5761
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        CARD-C15 on 2026-10-21 at 14:40
+
+Case: REF-5762
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        OPH-C16 on 2026-09-16 at 09:30
+
+Case: REF-5763
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        CARD-C17 on 2026-09-16 at 10:30
+
+Case: REF-5764
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        ORT-C18 on 2026-09-16 at 11:30
+
+Case: REF-5765
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        DER-C19 on 2026-09-16 at 12:30
+
+Case: REF-5766
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        OPH-C20 on 2026-09-23 at 10:00
+
+Case: REF-5767
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        CARD-C21 on 2026-09-30 at 11:00
+
+Case: REF-5768
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        ORT-C22 on 2026-09-23 at 12:00
+
+Case: REF-5769
+  Trial 1: PASS
+    Decision:      book
+    Turns:         4
+    Tokens In:     21,000
+    Tokens Out:    600
+    Cost:          US$0.002340
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, book_slot
+    Booked:        ENT-C23 on 2026-09-30 at 13:00
+
+Case: REF-5770
+  Trial 1: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5771
+  Trial 1: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5772
+  Trial 1: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5773
+  Trial 1: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5774
+  Trial 1: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5775
+  Trial 1: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5776
+  Trial 1: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      request_information
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5777
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5778
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5779
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5780
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5781
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5782
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5783
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5784
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5785
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5786
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+Case: REF-5787
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         3
+    Tokens In:     14,400
+    Tokens Out:    480
+    Cost:          US$0.001632
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         3
+    Tokens In:     14,400
+    Tokens Out:    480
+    Cost:          US$0.001632
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         3
+    Tokens In:     14,400
+    Tokens Out:    480
+    Cost:          US$0.001632
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots
+
+Case: REF-5788
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         3
+    Tokens In:     14,400
+    Tokens Out:    480
+    Cost:          US$0.001632
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         3
+    Tokens In:     14,400
+    Tokens Out:    480
+    Cost:          US$0.001632
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         3
+    Tokens In:     14,400
+    Tokens Out:    480
+    Cost:          US$0.001632
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots
+
+Case: REF-5789
+  Trial 1: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 2: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+  Trial 3: PASS
+    Decision:      escalate
+    Turns:         2
+    Tokens In:     9,000
+    Tokens Out:    360
+    Cost:          US$0.001044
+    Time:          0.000s
+    Tools Called:  get_referral, check_referral_criteria, lookup_patient
+
+======================================================================
+END OF REPORT
+======================================================================
