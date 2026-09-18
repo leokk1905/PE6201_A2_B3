@@ -496,5 +496,47 @@
       "v2_observation_approx_tokens": 29
     }
   ],
-  "interpretation_note": "V1 omits urgency-band filtering and may expose wrong-band slots. V2 requires band and therefore reduces the model's error surface. Prompt/descriptor size and observation size are reported separately because V2 may use a slightly larger descriptor while returning a more constrained and safer observation."
+  "interpretation_note": "V1 omits urgency-band filtering and may expose wrong-band slots. V2 requires band and therefore reduces the model's error surface. Prompt/descriptor size and observation size are reported separately because V2 may use a slightly larger descriptor while returning a more constrained and safer observation.",
+  "d6_ready_summary": {
+    "comparison": "get_clinic_slots v1 vs v2",
+    "eligible_cases": 35,
+    "tool_calls": {
+      "v1": 35,
+      "v2": 35,
+      "difference": 0,
+      "note": "One get_clinic_slots call per eligible case for each version, so call count is held constant."
+    },
+    "observation_tokens": {
+      "v1_mean_tokens_per_call": 62.97,
+      "v2_mean_tokens_per_call": 45.77,
+      "mean_reduction_tokens_per_call": 17.2,
+      "mean_reduction_percent": 27.31,
+      "v1_total_tokens": 2204,
+      "v2_total_tokens": 1602,
+      "total_reduction_tokens": 602,
+      "total_reduction_percent": 27.31
+    },
+    "rows_returned": {
+      "v1_mean_rows_per_call": 3.23,
+      "v2_mean_rows_per_call": 1.63,
+      "mean_row_reduction": 1.6,
+      "mean_row_reduction_percent": 49.56
+    },
+    "prompt_size": {
+      "v1_full_prompt_tokens": 1779,
+      "v2_full_prompt_tokens": 1838,
+      "change_tokens": 59
+    },
+    "descriptor_size": {
+      "v1_descriptor_tokens": 162,
+      "v2_descriptor_tokens": 222,
+      "change_tokens": 60
+    },
+    "calculation_method": {
+      "token_estimation": "characters / 4",
+      "observation_serialization": "compact JSON",
+      "comparison_basis": "Same eligible cases and same legal date windows; only the v1/v2 tool interface/implementation differs."
+    },
+    "interpretation": "V2 increases the model-facing prompt/descriptor slightly, but substantially reduces the amount of slot data returned per call. Because tool-call count is identical between versions, the observation-token reduction is attributable to the tighter v2 interface rather than fewer calls."
+  }
 }
