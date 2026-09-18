@@ -111,6 +111,13 @@ def main():
     print("  decision: %r    stopped_by: %r" % (off["decision"], off["stopped_by"]))
     print("  guardrails fired: %s"
           % ([g["guardrail"] for g in off["guardrails_fired"]] or "NONE"))
+    from harness import code_check
+    ok, fails = code_check(off, key[TRAP_CASE])
+    print("  CODE CHECK against %s's real answer key: %s"
+          % (TRAP_CASE, "PASS" if ok else "FAIL"))
+    for f in fails:
+        print("      %s" % f)
+    assert not ok, "expected the runaway trap to fail the code check"
     if off["stopped_by"] is None:
         print("  Nothing stopped it before this script's own %d-turn kill-switch -"
               % KILL_SWITCH_TURNS)

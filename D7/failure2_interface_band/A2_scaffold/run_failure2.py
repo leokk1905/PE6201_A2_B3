@@ -15,45 +15,34 @@ WHY THE INTERFACE, NOT THE PROMPT
     backend, because tools.call() genuinely dispatches to the real
     tool function no matter which backend chose to call it.
 
-WHAT WAS DELETED - NOTHING NEW WRITTEN, ONLY A SWITCH FLIPPED
-    tools.py already ships this failure as a controlled experiment for
-    D2(b): get_clinic_slots has a v1 interface (band not accepted, not
-    required, NOT EVEN RETURNED in the observation) and a v2 interface
-    (band required on input AND present on every returned row). Which
-    one answers to the name `get_clinic_slots` is chosen once, at
-    import time, by config.VERSION:
-
-        get_clinic_slots = (_get_clinic_slots_v1
-                            if config.VERSION == "v1"
-                            else _get_clinic_slots_v2)
-
-    No new "broken" file exists for this failure - v1 already IS the
-    working agent minus the interface constraint. THE FIX is setting
-    config.VERSION back to "v2" (the documented default) before the
-    module is (re)imported - exactly what the scaffold's own comment
-    in config.py already says to do ("restart the runtime when you
-    switch versions"). This script does that with importlib.reload()
-    instead of a second process, so both runs live in one log.
+WHAT WAS DELETED
+    tools_broken.py is tools.py with one word changed - see its own
+    header. `_get_clinic_slots_v2` - the FINAL interface this agent
+    submits with - has `band` made optional there. THE FIX is simply
+    using tools.py (unmodified) instead of tools_broken.py - nothing
+    else changes, and no if/else is added anywhere to catch the
+    missing argument. (tools.py separately ships a `_get_clinic_slots_v1`
+    for the unrelated D2(b) live-model comparison; swapping to THAT is
+    choosing between two things that already exist, not a deletion,
+    which is why this failure uses its own broken copy instead.)
 
 THE TRAP
-    REF-EV003 - a real, answer-keyed CARD referral from the 40-case
-    battery whose correct band is URGENT (2-week window; the answer
-    key expects CARD-C1 on 2026-09-16). Under v1, `get_clinic_slots`
-    does not require or return `band` at all, so a wider, careless
-    window query returns urgent AND routine slots looking identical -
-    nothing in the tool's own output tells the agent which is which.
-    The scripted "confused" move picks CARD-C2 on 2026-10-21, a real
-    slot from that same undifferentiated list, 35 days later than the
-    urgent slot that actually existed.
+    REF-EV003 (backends.py) - a real, answer-keyed CARD referral from
+    the 40-case battery whose correct band is URGENT (2-week window;
+    the answer key expects CARD-C1 on 2026-09-16). Its scripted move
+    list omits `band` from the get_clinic_slots call entirely - the
+    omission the deleted parameter exists to make impossible - and
+    picks CARD-C2, a real routine-band slot 35 days later.
 ====================================================================
 """
-import importlib
-
+import agent
 import backends
 import config
+import tools
+import tools_broken
+from harness import code_check, load_key
 
 TRAP_CASE = "REF-EV003"
-CORRECT = {"clinic": "CARD-C1", "date": "2026-09-16", "time": "08:30"}
 
 TRAP_SCRIPT = [
     {"thought": "Turn 1 must run alone.",
@@ -61,7 +50,7 @@ TRAP_SCRIPT = [
     {"thought": "Criteria and patient depend on nothing but the referral.",
      "calls": [("check_referral_criteria", {"specialty": "CARD", "referral_id": TRAP_CASE}),
                ("lookup_patient", {"patient_id": "P-EV003"})]},
-    {"thought": "Query for a slot - the interface does not ask for a band, "
+    {"thought": "Query for a slot - the interface does not require a band, "
                "so none is given.",
      "calls": [("get_clinic_slots",
                 {"specialty": "CARD", "from": "2026-09-09", "to": "2026-11-04"})]},
@@ -76,21 +65,14 @@ TRAP_SCRIPT = [
 ]
 
 
-def run_with_version(version, case_id=TRAP_CASE):
-    config.VERSION = version
-    import tools
-    importlib.reload(tools)          # re-runs the v1/v2 binding at the top of tools.py
-    import agent
-    importlib.reload(agent)          # agent.py's `import tools` now sees the reload
-
-    if case_id != TRAP_CASE:
-        return agent.run_case(case_id, problem="B")
-
+def run_trap(broken):
     original = backends.SCRIPTS.get(TRAP_CASE)
     backends.SCRIPTS[TRAP_CASE] = TRAP_SCRIPT
+    agent.tools = tools_broken if broken else tools   # the ONLY thing this demo changes
     try:
         return agent.run_case(TRAP_CASE, problem="B")
     finally:
+        agent.tools = tools                            # always leave it restored
         if original is None:
             del backends.SCRIPTS[TRAP_CASE]
         else:
@@ -100,47 +82,60 @@ def run_with_version(version, case_id=TRAP_CASE):
 def main():
     print()
     print(config.summary())
+
+    key = load_key("B")
+    expected = key[TRAP_CASE]
+    correct = expected["booked"]
     print()
     print("  the RIGHT answer for %s (urgent CARD, 2-week window): %s on %s at %s"
-          % (TRAP_CASE, CORRECT["clinic"], CORRECT["date"], CORRECT["time"]))
+          % (TRAP_CASE, correct["clinic"], correct["date"], correct["time"]))
 
     print()
     print("=" * 68)
-    print("  FIX OFF - config.VERSION = 'v1' (band not accepted or returned)")
+    print("  FIX OFF - tools_broken.py (band optional on _get_clinic_slots_v2)")
     print("=" * 68)
-    off = run_with_version("v1")
+    off = run_trap(broken=True)
+    ok, fails = code_check(off, expected)
     print("  turns %d · tool calls %d · tokens %d · cost US$%.5f"
           % (off["turns"], len(off["evidence"]),
              off["tokens_in"] + off["tokens_out"], off["cost_usd"]))
     print("  decision: %r    booked: %s" % (off["decision"], off.get("booked")))
-    days_late = _days_between(CORRECT["date"], off["booked"]["date"])
-    print("  code_check would PASS this: decision=='book' matches the answer key.")
-    print("  It is wrong anyway - a 2-week-urgent cardiac referral was silently")
-    print("  booked %d days later than the slot that actually existed for it."
+    print("  CODE CHECK: %s" % ("PASS" if ok else "FAIL"))
+    for f in fails:
+        print("      %s" % f)
+    days_late = _days_between(correct["date"], off["booked"]["date"])
+    print("  The DECISION alone ('book') matches the answer key - a pass-rate")
+    print("  table that only compared decisions would call this a pass. The")
+    print("  full code check (which also checks the booked slot) correctly")
+    print("  fails it: a 2-week-urgent referral was silently booked %d days"
           % days_late)
+    print("  later than the slot that actually existed for it.")
+    assert not ok, "expected the broken interface to fail the code check"
 
     print()
     print("=" * 68)
-    print("  FIX ON - config.VERSION = 'v2' (band required on input and output)")
+    print("  FIX ON - tools.py, unmodified (band required)")
     print("=" * 68)
     try:
-        on = run_with_version("v2")
-        raise AssertionError("expected the v2 interface to reject the "
+        run_trap(broken=False)
+        raise AssertionError("expected the restored interface to reject the "
                              "band-less call; it did not")
     except TypeError as exc:
         print("  REJECTED before any tool body ran: %s" % exc)
-        print("  PASS - v2's get_clinic_slots does not accept a call missing")
-        print("  `band` at all; the same trap script cannot even execute under")
-        print("  the restored interface. No if/else was added anywhere to")
-        print("  detect this - Python's own call-signature check did the work.")
+        print("  PASS - the interface makes the wrong call impossible to construct.")
+        print("  No if/else was added anywhere to detect a missing band; Python's")
+        print("  own call-signature check did the work.")
 
     print()
     print("=" * 68)
-    print("  REGRESSION - v2 must not break real callers")
+    print("  REGRESSION - the restored signature must not break real callers")
     print("=" * 68)
-    check = run_with_version("v2", case_id="REF-5602")
-    print("  REF-5602 (unrelated, real case) still decides %r in %d turns"
-          % (check["decision"], check["turns"]))
+    ok_case = agent.run_case("REF-5602", problem="B")
+    ok2, fails2 = code_check(ok_case, load_key("B")["REF-5602"])
+    print("  REF-5602 (unrelated, real case): CODE CHECK %s"
+          % ("PASS" if ok2 else "FAIL"))
+    print("  every real script already names `band` explicitly, so only a call")
+    print("  that never should have been made in the first place is affected.")
 
     print()
     print("=" * 68)
@@ -152,8 +147,7 @@ def main():
     print("  A prompt instruction ('always pass band') is not read by the")
     print("  scripted backend at all, and even live it is only advice - nothing")
     print("  stops a model from omitting the argument anyway. Only the")
-    print("  function's own signature - and, here, its own RETURN SHAPE - can")
-    print("  make the missing distinction impossible to ignore.")
+    print("  function's own signature makes the mistake impossible to type.")
     print()
 
 
