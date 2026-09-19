@@ -14,7 +14,7 @@ def verify_guardrail_data():
     print()
 
     # Data location
-    data_b_path = os.path.join("A2_reference_data", "A2_reference_data", "data_B")
+    data_b_path = os.path.join("A2_reference_data", "data_B")
     print(f"Data location: {data_b_path}")
     print()
 
@@ -145,7 +145,7 @@ def verify_guardrail_data():
         print("  - Hostile text injection (3 cases)")
         print()
         print("Documentation:")
-        doc_path = os.path.join("A2_reference_data", "A2_reference_data", "GUARDRAIL_TEST_CASES.md")
+        doc_path = os.path.join("A2_reference_data", "GUARDRAIL_TEST_CASES.md")
         if os.path.exists(doc_path):
             print(f"  [OK] {doc_path}")
         else:

@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Set data path before importing config
 os.environ["A2_DATA"] = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), "..", "..", "A2_reference_data", "A2_reference_data"))
+    os.path.dirname(__file__), "..", "A2_reference_data"))
 
 import backends
 import config
@@ -644,7 +644,7 @@ def print_autonomy_justification():
 def write_results_to_file(results):
     """Write detailed test results to a text file"""
     # Output file location: next to what_good_looks_like.txt
-    output_path = os.path.join(os.path.dirname(__file__), "..", "..",
+    output_path = os.path.join(os.path.dirname(__file__), "..",
                                "guardrail_test_results.txt")
     output_path = os.path.abspath(output_path)
 

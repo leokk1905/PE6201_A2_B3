@@ -1,9 +1,9 @@
 ======================================================================
 PE6201 Assignment 2 - Evaluation Report
 ======================================================================
-Generated: 2026-09-18 18:34:17
+Generated: 2026-09-19 13:50:02
 Configuration: BACKEND=scripted  FREE, deterministic  |  PROBLEM=B  |  model=(no model)  |  cap=8 turns  |  autonomy=confirm
-Data Path: D:\Github\PE6201_A2\our_works\A2_reference_data\A2_reference_data
+Data Path: D:\Github\PE6201_A2\our_works\A2_reference_data
 ======================================================================
 
 SUMMARY STATISTICS
@@ -22,8 +22,8 @@ Token Usage:
   Avg Output/Case:   600 tokens
 
 Execution Time:
-  Total Time:        0.01 seconds
-  Avg Time/Case:     0.006 seconds
+  Total Time:        0.00 seconds
+  Avg Time/Case:     0.001 seconds
 
 Turn Distribution:
   Min Turns:         4
@@ -50,7 +50,7 @@ Case: REF-5602
     Tokens In:     21,000
     Tokens Out:    600
     Cost:          US$0.002340
-    Time:          0.006s
+    Time:          0.001s
     Tools Called:  get_referral, check_referral_criteria, lookup_patient, get_clinic_slots, get_clinic_slots, book_slot
     Booked:        OPH-C2 on 2026-10-14 at 11:20
 
