@@ -1,0 +1,20 @@
+{
+  "experiment": "D3 guardrail comparison under D2(b) v1 and v2 tool interfaces",
+  "v1": {
+    "interface": "_get_clinic_slots_v1",
+    "passed": 14,
+    "total": 14,
+    "pass_rate_percent": 100.0,
+    "hostile_passed": 3,
+    "hostile_total": 3
+  },
+  "v2": {
+    "interface": "_get_clinic_slots_v2",
+    "passed": 14,
+    "total": 14,
+    "pass_rate_percent": 100.0,
+    "hostile_passed": 3,
+    "hostile_total": 3
+  },
+  "interpretation": "The guardrail suite belongs to D3. Running it under both interface versions provides the guardrail-cases-passed metric required by D2(b)."
+}
