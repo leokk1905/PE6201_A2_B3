@@ -24,8 +24,8 @@ import os
 # ─────────────────────────────────────────────────────────────────────
 # THE THREE STRINGS. Change these, change nothing else.
 # ─────────────────────────────────────────────────────────────────────
-#BACKEND = "scripted"          # "scripted" | "live"
-BACKEND = "live"          # "scripted" | "live"
+BACKEND = "scripted"          # "scripted" | "live"
+#BACKEND = "live"          # "scripted" | "live"
 
 #MODEL = "openai/gpt-4o-mini"  # only used when BACKEND == "live"
 MODEL = "openai/gpt-4o-mini"  # only used when BACKEND == "live"
